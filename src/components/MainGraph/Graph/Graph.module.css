@@ -1,0 +1,8 @@
+.popover {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.hoveredSerieInPopover {
+  background-color: lightblue;
+}

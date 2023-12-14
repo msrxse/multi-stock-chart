@@ -1,0 +1,73 @@
+.mainGraph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* graphContainer */
+.graphContainerWrapper {
+  width: 100%;
+  position: relative;
+}
+
+.graphContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* end graphContainer */
+
+/* Brush */
+
+.brushWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/* end Brush */
+
+/* legendContainer */
+
+.legendContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.legendContainer > ul {
+  height: 120px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: auto;
+}
+
+.legendContainer > ul > li {
+  color: var(--color-grey-400);
+  min-width: 200px;
+  font-size: 0.8em;
+  margin-right: 1em;
+  margin-bottom: 0.5em;
+}
+
+.listButton {
+  cursor: pointer;
+}
+
+.active .listButton {
+  color: var(--color-black);
+}
+
+.listButton:hover,
+.listButton:focus {
+  color: var(--color-blue-500);
+}
+
+/* end legendContainer */
