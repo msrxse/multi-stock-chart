@@ -1,4 +1,3 @@
-import React from 'react';
 import MainContainer from './components/MainGraph/MainContainer';
 
 import {
