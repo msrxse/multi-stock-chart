@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 // import { utcParse, utcFormat } from 'd3-time-format';
 // import { timeDay } from 'd3-time';
 import moment from 'moment';
@@ -7,12 +7,7 @@ import GraphContainer from './GraphContainer';
 import Brush from './Brush';
 import Legend from './Legend';
 import { margin } from '../utils/margin';
-import {
-  getActiveSeriesIds,
-  getFilteredActiveSeries,
-  closestDateFound,
-  filterByDate,
-} from '../utils/utils';
+import { getActiveSeriesIds, getFilteredActiveSeries, closestDateFound, filterByDate } from '../utils/utils';
 
 import styles from '../allCss.module.css';
 
@@ -52,9 +47,7 @@ class MainGraph extends Component {
    */
   setCurrentHoveredSerieIndex = (trancheId) => {
     return this.setState((prevState) => {
-      const hoveredIndex = prevState.seriesList
-        .map((each) => each.key)
-        .indexOf(trancheId);
+      const hoveredIndex = prevState.seriesList.map((each) => each.key).indexOf(trancheId);
 
       return { currentHoveredSerieIndex: hoveredIndex };
     });
@@ -72,9 +65,7 @@ class MainGraph extends Component {
     }
     // last 3-month filtered by default
     const selectiondateBoundaries = extent(dates);
-    const threeMonthsAgo = moment(selectiondateBoundaries[1])
-      .subtract(3, 'months')
-      .valueOf();
+    const threeMonthsAgo = moment(selectiondateBoundaries[1]).subtract(3, 'months').valueOf();
     // closest date found in dates array
     const closestStartDateFound = closestDateFound(dates, threeMonthsAgo);
     const idxMin = dates.findIndex((x) => x === closestStartDateFound);
@@ -95,24 +86,14 @@ class MainGraph extends Component {
     });
     // filter active trancheIds and pick those series
     const activeSeriesIds = getActiveSeriesIds(newSelectedSeriesIds);
-    const filteredActiveSeries = getFilteredActiveSeries(
-      series,
-      activeSeriesIds
-    );
+    const filteredActiveSeries = getFilteredActiveSeries(series, activeSeriesIds);
     // Filters series values array from startDate to endDate of the selection
-    const dateRandeFilteredSeries = filterByDate(
-      filteredActiveSeries,
-      idxMin,
-      idxMax
-    );
+    const dateRandeFilteredSeries = filterByDate(filteredActiveSeries, idxMin, idxMax);
 
     return this.setState(
       {
         selectedDates: newSelectedDates,
-        dateRange: [
-          newSelectedDates[0],
-          newSelectedDates[newSelectedDates.length - 1],
-        ],
+        dateRange: [newSelectedDates[0], newSelectedDates[newSelectedDates.length - 1]],
         dates: Array.from(dates), // dates for brush
         seriesList: dateRandeFilteredSeries,
         seriesListForBrush: Array.from(filteredActiveSeries),
@@ -120,7 +101,7 @@ class MainGraph extends Component {
       },
       () => {
         this.setState({ dataLoaded: true });
-      }
+      },
     );
   };
 
@@ -164,13 +145,8 @@ class MainGraph extends Component {
     // if value is there - toggle it , otherwise set it as true
     newSelection.set(trancheId, !newSelection.get(trancheId));
     // filter active trancheIds and pick those series
-    const activeSeriesIds = new Map(
-      [...newSelection].filter(([key, value]) => value === true)
-    );
-    const filteredActiveSeries = getFilteredActiveSeries(
-      dataset.series,
-      activeSeriesIds
-    );
+    const activeSeriesIds = new Map([...newSelection].filter(([key, value]) => value === true));
+    const filteredActiveSeries = getFilteredActiveSeries(dataset.series, activeSeriesIds);
 
     return this.setState(
       {
@@ -184,7 +160,7 @@ class MainGraph extends Component {
           : this.props.handleSelectSeries({
               trancheId,
             });
-      }
+      },
     );
   };
 
@@ -213,9 +189,7 @@ class MainGraph extends Component {
   pickInstrumentsBySelectedMetric = () => {
     const { selectedMetric, options, optionsInstruments } = this.props;
 
-    return options[selectedMetric.label].map(
-      (trancheId) => optionsInstruments[trancheId]
-    );
+    return options[selectedMetric.label].map((trancheId) => optionsInstruments[trancheId]);
   };
 
   render() {

@@ -38,19 +38,11 @@ class Brush extends Component {
   }
 
   componentDidMount() {
-    this.setupBrush(
-      this.props.series,
-      this.props.dates,
-      this.props.width,
-      this.props.height
-    );
+    this.setupBrush(this.props.series, this.props.dates, this.props.width, this.props.height);
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (
-      this.props.width !== prevProps.width ||
-      this.props.height !== prevProps.height
-    ) {
+    if (this.props.width !== prevProps.width || this.props.height !== prevProps.height) {
       const { series, dates, width, height } = this.props;
       const { lineGenerator } = prevState;
 
@@ -63,25 +55,11 @@ class Brush extends Component {
       const { series, dates, width, height, animateTransition } = this.props;
       const { lineGenerator } = prevState;
 
-      this.updateSimPaths(
-        lineGenerator,
-        series,
-        dates,
-        width,
-        height,
-        animateTransition
-      );
+      this.updateSimPaths(lineGenerator, series, dates, width, height, animateTransition);
     }
   }
 
-  updateSimPaths = (
-    lineGenerator,
-    series,
-    dates,
-    width,
-    height,
-    animateTransition
-  ) => {
+  updateSimPaths = (lineGenerator, series, dates, width, height, animateTransition) => {
     const updatedScales = this.getScales(series, dates, width, height);
 
     if (this.simPathsRef.current) {
@@ -239,9 +217,7 @@ class Brush extends Component {
 
   brushEnded = (event) => {
     if (!event.selection && this.brushRef.current) {
-      const selection = brushSelection(this.brushRef.current)
-        ? null
-        : this.state.scales.xScale.range();
+      const selection = brushSelection(this.brushRef.current) ? null : this.state.scales.xScale.range();
 
       select(this.brushRef.current).call(this.brush.move, selection);
     }
@@ -259,10 +235,7 @@ class Brush extends Component {
           height={this.props.height}
           transform={`translate(${this.props.x}, ${this.props.y})`}
         >
-          <g
-            ref={this.xAxisRef}
-            transform={`translate(0, ${this.props.height - margin.bottom})`}
-          />
+          <g ref={this.xAxisRef} transform={`translate(0, ${this.props.height - margin.bottom})`} />
           <g ref={this.simPathsRef}>
             <rect
               x={margin.left}

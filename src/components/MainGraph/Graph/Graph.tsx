@@ -1,11 +1,10 @@
-import React, { Component } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import moment from 'moment';
 import { line } from 'd3-shape';
 import { bisectLeft, least, ascending } from 'd3-array';
 import { select } from 'd3-selection';
 import { easeCubicOut, easeCubicIn } from 'd3-ease';
 import { Popover } from 'antd';
-// import Popover from '../../components/Popover';
 import Icon from '../../Icon/Icon';
 import generateRamdomId from '../utils/generateRamdomId';
 import Axis from './Axis';
@@ -15,111 +14,83 @@ import DateFilterLegend from './DateFilterLegend';
 
 import styles from './Graph.module.css';
 
-class Graph extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      series: this.props.series,
-      selectedDates: this.props.selectedDates,
-      // lineGenerator: line(), // line().defined(d => !isNaN(d)),
-      lineGenerator: line().defined((d) => d !== null),
-      simPaths: [],
-      hoveredSimPathId: null,
-      tooltipXPos: 0,
-      tooltipYPos: 0,
-      currentSeriesSelected: [],
-    };
+interface GraphProps {
+  keyVal: string;
+  animateTransition: boolean;
+  series: any;
+  selectedDates: string[];
+  width: string;
+  height: string;
+  x: string;
+  y: string;
+  xScale: any;
+  yScale: any;
+  currentHoveredSerieIndex: number;
+}
 
-    this.simPathsRef = React.createRef();
-  }
+function Graph(props: GraphProps) {
+  const [lineGenerator, setLineGenerator] = useState(() => line().defined((d) => d !== null));
+  const [simPaths, setSimPaths] = useState([]);
+  const [hoveredSimPathId, setHoveredSimPathId] = useState(null);
+  const [tooltipXPos, setTooltipXPos] = useState(0);
+  const [tooltipYPos, setTooltipYPos] = useState(0);
+  const [currentSeriesSelected, setCurrentSeriesSelected] = useState([]);
+  const [hoveredSimPathDate, setHoveredSimPathDate] = useState('');
+  const [tooltipText, setTooltipText] = useState('');
 
-  componentDidMount() {
-    const { series, selectedDates } = this.state;
+  const simPathsRef = useRef();
 
-    this.drawSimPaths(series, selectedDates);
-  }
+  /**
+   * Just run once
+   */
+  useEffect(() => {
+    drawSimPaths();
+  }, []);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { selectedDates, series, width, animateTransition } = this.props;
+  /**
+   * We specifically want to update on selectedDates (brush filtering)
+   * and also on series.length (user uses legend to add/remove new series)
+   */
+  useEffect(() => {
+    updateSimPaths();
+  }, [props.selectedDates, props.series.length]);
 
-    if (series !== prevProps.series) {
-      const { lineGenerator } = prevState;
-
-      this.updateSimPaths(
-        series,
-        selectedDates,
-        lineGenerator,
-        animateTransition,
-        width
-      );
-    }
-
-    const { xScale, yScale } = this.props;
-
-    if (xScale !== prevProps.xScale || yScale !== prevProps.yScale) {
-      const { lineGenerator } = prevState;
-
-      this.updateSimPaths(
-        series,
-        selectedDates,
-        lineGenerator,
-        animateTransition,
-        width
-      );
-    }
-  }
-
-  drawSimPaths = (series, selectedDates) => {
-    const { lineGenerator } = this.state;
-    const { xScale, yScale } = this.props;
-
-    lineGenerator.x((d, i) => xScale(selectedDates[i]));
-    lineGenerator.y((d) => yScale(d));
+  const drawSimPaths = () => {
+    lineGenerator.x((d, i) => props.xScale(props.selectedDates[i]));
+    lineGenerator.y((d) => props.yScale(d));
     // generate simPaths from lineGenerator
-    const simPaths = series.map((d) => lineGenerator(d.values));
+    const simPaths = props.series.map((d) => lineGenerator(d.values));
 
     // set new values to state
-    this.setState({
-      series,
-      selectedDates,
-      lineGenerator,
-      simPaths,
-    });
+    // setLineGenerator(lineGenerator);
+    setSimPaths(simPaths);
   };
 
-  updateSimPaths = (
-    series,
-    selectedDates,
-    lineGenerator,
-    animateTransition
-  ) => {
+  const updateSimPaths = () => {
     // Animate simPath color but don't change data
-    if (this.simPathsRef.current) {
-      // update lineGenerator from new scale and data
-      lineGenerator.x((d, i) => this.props.xScale(selectedDates[i]));
-      lineGenerator.y((d) => this.props.yScale(d));
-      // generate simPaths from lineGenerator
-      const simPaths = series.map((d) => lineGenerator(d.values));
 
-      // reDraw lines if series get added and
-      // also if the selectedDates have changed (with brush filter)
-      if (
-        simPaths.length !== this.state.simPaths.length ||
-        selectedDates.length !== this.state.selectedDates.length
-      ) {
+    if (simPathsRef.current) {
+      // update lineGenerator from new scale and data
+      lineGenerator.x((d, i) => props.xScale(props.selectedDates[i]));
+      lineGenerator.y((d) => props.yScale(d));
+      // generate simPaths from lineGenerator
+      const newSimPaths = props.series.map((d) => lineGenerator(d.values));
+
+      // reDraw lines if props.series get added and
+      if (newSimPaths.length !== simPaths.length) {
         // re-draw simPaths in render
-        this.drawSimPaths(series, selectedDates);
+        drawSimPaths();
       } else {
-        this.drawSimPaths(series, selectedDates);
+        drawSimPaths();
 
         // update simPaths since same number
         // get svg node
-        const simPathsNode = select(this.simPathsRef.current);
+        const simPathsNode = select(simPathsRef.current);
 
-        if (!animateTransition) {
+        if (!props.animateTransition) {
           const paths = simPathsNode
             .selectAll('.simPath')
-            .data(series)
+            .data(props.series)
 
             // paths.exit().remove()
             // paths.enter().append('path')
@@ -127,23 +98,19 @@ class Graph extends Component {
             // .attr('stroke', () => colors.green)
             .on('end', () => {
               // set new values to state
-              this.setState({
-                series,
-                selectedDates,
-                lineGenerator,
-                simPaths,
-              });
+              // setLineGenerator(lineGenerator);
+              setSimPaths(simPaths);
             });
           const hoverPaths = simPathsNode
             .selectAll('.simPath-hover')
-            .data(series)
+            .data(props.series)
             // hoverPaths.exit().remove()
             // hoverPaths.enter().append('path')
             .attr('d', (d) => lineGenerator(d.values));
         } else {
           const paths = simPathsNode
             .selectAll('.simPath')
-            .data(series)
+            .data(props.series)
             // paths.exit().remove()
             // paths.enter().append('path')
             .transition()
@@ -160,30 +127,27 @@ class Graph extends Component {
             .attr('stroke-opacity', 1)
             .on('end', () => {
               // set new values to state
-              this.setState({
-                series,
-                selectedDates,
-                lineGenerator,
-                simPaths,
-              });
+              // setLineGenerator(lineGenerator);
+              setSimPaths(simPaths);
             });
 
           simPathsNode
             .selectAll('.simPath-hover')
-            .data(series)
+            .data(props.series)
             .attr('d', (d) => lineGenerator(d.values));
         }
       }
     }
   };
 
-  handleMouseLeave = () => {
-    this.setState({ hoveredSimPathId: null, hoveredSimPathDate: null });
+  const handleMouseLeave = () => {
+    setHoveredSimPathId(null);
+    setHoveredSimPathDate(null);
   };
 
-  handleBetterSimMouseHover = (event) => {
+  const handleBetterSimMouseHover = (event) => {
     event.preventDefault();
-    const selector = `.graphSVG_${this.props.keyVal}`;
+    const selector = `.graphSVG_${props.keyVal}`;
     const node = document.querySelector(selector);
 
     if (!node) {
@@ -194,21 +158,18 @@ class Graph extends Component {
     point.x = event.clientX;
     point.y = event.clientY;
     point = point.matrixTransform(node.getScreenCTM().inverse());
-    const xm = this.props.xScale.invert(point.x);
-    const ym = this.props.yScale.invert(point.y);
-    const i1 = bisectLeft(this.props.selectedDates, xm, 1);
+    const xm = props.xScale.invert(point.x);
+    const ym = props.yScale.invert(point.y);
+    const i1 = bisectLeft(props.selectedDates, xm, 1);
     const i0 = i1 - 1;
-    const i =
-      xm - this.props.selectedDates[i0] > this.props.selectedDates[i1] - xm
-        ? i1
-        : i0;
-    const s = least(this.props.series, (d) => Math.abs(d.values[i] - ym));
-    // list of series in the path of yPos
-    const currentSeriesSelected = this.props.series.reduce((acc, serie) => {
+    const i = xm - props.selectedDates[i0] > props.selectedDates[i1] - xm ? i1 : i0;
+    const s = least(props.series, (d) => Math.abs(d.values[i] - ym));
+    // list of props.series in the path of yPos
+    const currentSeriesSelected = props.series.reduce((acc, serie) => {
       if (serie.values[i]) {
         acc.push({
           ...serie,
-          tooltipYPos: this.props.yScale(serie.values[i]),
+          tooltipYPos: props.yScale(serie.values[i]),
         });
       }
 
@@ -216,30 +177,20 @@ class Graph extends Component {
     }, []);
 
     if (s) {
-      const hoveredIdx = this.props.series.findIndex(
-        (sim) => sim.key === s.key
-      );
+      const hoveredIdx = props.series.findIndex((sim) => sim.key === s.key);
 
-      this.setState({
-        hoveredSimPathId: hoveredIdx,
-        hoveredSimPathDate: moment.utc(xm).local().format('DD-MMM-YYYY'),
-        tooltipText: s.key,
-        tooltipXPos: this.props.xScale(this.props.selectedDates[i]),
-        tooltipYPos: this.props.yScale(ym),
-        currentSeriesSelected,
-      });
+      setHoveredSimPathId(hoveredIdx);
+      setHoveredSimPathDate(moment.utc(xm).local().format('DD-MMM-YYYY'));
+      setTooltipText(s.key);
+      setTooltipXPos(props.xScale(props.selectedDates[i]));
+      setTooltipYPos(props.yScale(ym));
+      setCurrentSeriesSelected(currentSeriesSelected);
     }
     return undefined;
   };
 
-  formatTrancheName = (tranche) => {
-    const {
-      amount = '',
-      currencyRefCode,
-      coupon = '',
-      maturity,
-      debtSecurityRefName,
-    } = tranche;
+  const formatTrancheName = (tranche) => {
+    const { amount = '', currencyRefCode, coupon = '', maturity, debtSecurityRefName } = tranche;
 
     return `
       ${currencyRefCode}
@@ -251,11 +202,11 @@ class Graph extends Component {
   };
 
   /**
-   * Uses currenteSelected series (series that exist in the Ypath of the y mouse position)
+   * Uses currenteSelected props.series (props.series that exist in the Ypath of the y mouse position)
    * Also sorted ascending
    */
-  getPopoverContent = () => {
-    return this.state.currentSeriesSelected
+  const getPopoverContent = () => {
+    return currentSeriesSelected
       .sort((x, y) => {
         return ascending(x.tooltipYPos, y.tooltipYPos);
       })
@@ -263,164 +214,147 @@ class Graph extends Component {
         <div key={`serie-${generateRamdomId()}`} className={styles.popover}>
           <Icon icon="dot" color={serie.color} size="16" />
 
-          {this.state.tooltipText === serie.key ? (
-            <div className={styles.hoveredSerieInPopover}>
-              {this.formatTrancheName(serie)}
-            </div>
+          {tooltipText === serie.key ? (
+            <div className={styles.hoveredSerieInPopover}>{formatTrancheName(serie)}</div>
           ) : (
-            this.formatTrancheName(serie)
+            formatTrancheName(serie)
           )}
         </div>
       ));
   };
 
-  getColorOfSelectedSeries = () => {
-    return this.props.series.map((serie) =>
-      this.state.hoveredSimPathId === serie.key ? serie.color : colors.gray
-    );
+  const getColorOfSelectedSeries = () => {
+    return props.series.map((serie) => (hoveredSimPathId === serie.key ? serie.color : colors.gray));
   };
 
-  render() {
-    return (
-      <g
-        width={this.props.width}
-        height={this.props.height}
-        transform={`translate(${this.props.x}, ${this.props.y})`}
-        ref={this.simPathsRef}
-        onMouseLeave={this.handleMouseLeave}
-      >
-        <g>
-          <rect
-            x={margin.left}
-            y={margin.top}
-            className="graphArea"
-            id={`graphArea_${this.props.keyVal}`}
-            width={this.props.width - margin.left - margin.right}
-            height={this.props.height - margin.bottom - margin.top}
-            fill={colors.graphBkgd}
-            onMouseMove={this.handleBetterSimMouseHover}
-          />
-          {
-            // visible simPaths
-            this.state.simPaths.map((simPath, i) => {
-              return (
-                <path
-                  d={simPath}
-                  key={`simPath-${generateRamdomId()}`}
-                  id={`simPath-${i}`}
-                  className="simPath"
-                  fill="none"
-                  // stroke={this.state.series[i].over ? colors.red : colors.green}
-                  stroke={this.state.series[i].color}
-                  strokeWidth="2"
-                  strokeOpacity={
-                    this.props.currentHoveredSerieIndex === -1 ||
-                    this.props.currentHoveredSerieIndex === i
-                      ? 1
-                      : 0.3
-                  }
-                />
-              );
-            })
-          }
-          {
-            // highlight simPaths
-            this.state.simPaths.map((simPath, i) => {
-              const simIsHovered = i === this.state.hoveredSimPathId;
+  return (
+    <g
+      width={props.width}
+      height={props.height}
+      transform={`translate(${props.x}, ${props.y})`}
+      ref={simPathsRef}
+      onMouseLeave={handleMouseLeave}
+    >
+      <g>
+        <rect
+          x={margin.left}
+          y={margin.top}
+          className="graphArea"
+          id={`graphArea_${props.keyVal}`}
+          width={props.width - margin.left - margin.right}
+          height={props.height - margin.bottom - margin.top}
+          fill={colors.graphBkgd}
+          onMouseMove={handleBetterSimMouseHover}
+        />
+        {
+          // visible simPaths
+          simPaths.map((simPath, i) => {
+            return (
+              <path
+                d={simPath}
+                key={`simPath-${generateRamdomId()}`}
+                id={`simPath-${i}`}
+                className="simPath"
+                fill="none"
+                // stroke={props.series[i].over ? colors.red : colors.green}
+                stroke={props.series[i]?.color || colors.black}
+                strokeWidth="2"
+                strokeOpacity={props.currentHoveredSerieIndex === -1 || props.currentHoveredSerieIndex === i ? 1 : 0.3}
+              />
+            );
+          })
+        }
+        {
+          // highlight simPaths
+          simPaths.map((simPath, i) => {
+            const simIsHovered = i === hoveredSimPathId;
 
-              return (
-                <path
-                  d={simPath}
-                  key={`simPath-${generateRamdomId()}-hover`}
-                  id={`simPath-${i}-hover`}
-                  className="simPath-hover"
-                  fill="none"
-                  stroke={
-                    simIsHovered
-                      ? this.getColorOfSelectedSeries()
-                      : colors.lightGray
-                  }
-                  strokeWidth="2"
-                  strokeOpacity={
-                    typeof this.state.hoveredSimPathId === 'number' ? 1 : 0
-                  }
-                />
-              );
-            })
-          }
-          <Popover
-            key="sim-tooltip"
-            title={this.state.hoveredSimPathDate}
-            content={this.getPopoverContent()}
-            placement="rightBottom"
-            visible={this.state.hoveredSimPathDate}
-            // visible
-            // align={{
-            //     points: ['bc', 'tc'],        // align top left point of sourceNode with top right point of targetNode
-            //     offset: [10, 20],            // the offset sourceNode by 10px in x and 20px in y,
-            //     targetOffset: ['0%','0%'], // the offset targetNode by 30% of targetNode width in x and 40% of targetNode height in y,
-            //     overflow: { adjustX: true, adjustY: true }, // auto adjust position when sourceNode is overflowed
-            //   }}
-            data-html="true"
-          >
-            <>
+            return (
+              <path
+                d={simPath}
+                key={`simPath-${generateRamdomId()}-hover`}
+                id={`simPath-${i}-hover`}
+                className="simPath-hover"
+                fill="none"
+                stroke={simIsHovered ? getColorOfSelectedSeries() : colors.lightGray}
+                strokeWidth="2"
+                strokeOpacity={typeof hoveredSimPathId === 'number' ? 1 : 0}
+              />
+            );
+          })
+        }
+        <Popover
+          key="sim-tooltip"
+          title={hoveredSimPathDate}
+          content={getPopoverContent()}
+          placement="rightBottom"
+          visible={hoveredSimPathDate}
+          // visible
+          // align={{
+          //     points: ['bc', 'tc'],        // align top left point of sourceNode with top right point of targetNode
+          //     offset: [10, 20],            // the offset sourceNode by 10px in x and 20px in y,
+          //     targetOffset: ['0%','0%'], // the offset targetNode by 30% of targetNode width in x and 40% of targetNode height in y,
+          //     overflow: { adjustX: true, adjustY: true }, // auto adjust position when sourceNode is overflowed
+          //   }}
+          data-html="true"
+        >
+          <>
+            <circle
+              cx={tooltipXPos}
+              cy={tooltipYPos}
+              r={10}
+              fill={colors.gray}
+              fillOpacity={0}
+              className="tooltipCircle"
+            />
+            {currentSeriesSelected.map((serie) => (
               <circle
-                cx={this.state.tooltipXPos}
-                cy={this.state.tooltipYPos}
-                r={10}
-                fill={colors.gray}
-                fillOpacity={0}
+                key={`serie-${generateRamdomId()}`}
+                cx={tooltipXPos}
+                cy={serie.tooltipYPos}
+                r={4}
+                strokeWidth={2}
+                stroke={colors.black}
+                strokeOpacity={hoveredSimPathDate ? 1 : 0}
+                fill={serie.color}
+                fillOpacity={hoveredSimPathDate ? 1 : 0}
                 className="tooltipCircle"
               />
-              {this.state.currentSeriesSelected.map((serie) => (
-                <circle
-                  key={`serie-${generateRamdomId()}`}
-                  cx={this.state.tooltipXPos}
-                  cy={serie.tooltipYPos}
-                  r={4}
-                  strokeWidth={2}
-                  stroke={colors.black}
-                  strokeOpacity={this.state.hoveredSimPathDate ? 1 : 0}
-                  fill={serie.color}
-                  fillOpacity={this.state.hoveredSimPathDate ? 1 : 0}
-                  className="tooltipCircle"
-                />
-              ))}
-            </>
-          </Popover>
+            ))}
+          </>
+        </Popover>
 
-          <line
-            key="mouse-vertical-line"
-            className="mouse-vertical-line"
-            x1={this.state.tooltipXPos}
-            y1={this.props.height - margin.bottom}
-            x2={this.state.tooltipXPos}
-            y2={0 - margin.top}
-            stroke={colors.gray}
-            strokeWidth={1}
-            strokeOpacity={this.state.hoveredSimPathDate ? 1 : 0}
-            style={{ pointerEvents: 'none' }}
-          />
-        </g>
-
-        <DateFilterLegend x={margin.left} y={margin.top} />
-
-        <g>
-          <Axis
-            keyVal={this.props.keyVal}
-            width={this.props.width - margin.left}
-            height={this.props.height}
-            orientation="bottom"
-            view="graph"
-            scale={this.props.xScale}
-            x={0}
-            y={this.props.height - margin.bottom}
-            // y={0}
-          />
-        </g>
+        <line
+          key="mouse-vertical-line"
+          className="mouse-vertical-line"
+          x1={tooltipXPos}
+          y1={props.height - margin.bottom}
+          x2={tooltipXPos}
+          y2={0 - margin.top}
+          stroke={colors.gray}
+          strokeWidth={1}
+          strokeOpacity={hoveredSimPathDate ? 1 : 0}
+          style={{ pointerEvents: 'none' }}
+        />
       </g>
-    );
-  }
+
+      <DateFilterLegend x={margin.left} y={margin.top} />
+
+      <g>
+        <Axis
+          keyVal={props.keyVal}
+          width={props.width - margin.left}
+          height={props.height}
+          orientation="bottom"
+          view="graph"
+          scale={props.xScale}
+          x={0}
+          y={props.height - margin.bottom}
+          // y={0}
+        />
+      </g>
+    </g>
+  );
 }
 
 export default Graph;

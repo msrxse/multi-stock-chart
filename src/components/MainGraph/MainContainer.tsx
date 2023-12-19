@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import MainGraph from './Graph/MainGraph';
 
 import styles from './MainContainer.module.css';
@@ -15,10 +15,7 @@ class MainContainer extends Component {
    * On mount gets the options default from redux as its available
    */
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (
-      !prevState.selectedMetric.label &&
-      nextProps.optionsDefault !== prevState.selectedMetric.label
-    ) {
+    if (!prevState.selectedMetric.label && nextProps.optionsDefault !== prevState.selectedMetric.label) {
       return {
         selectedMetric: {
           label: nextProps.optionsDefault,
@@ -37,9 +34,7 @@ class MainContainer extends Component {
      */
     if (
       prevProps.optionsDefault !== this.props.optionsDefault ||
-      (prevProps.optionsFetching === true &&
-        this.props.optionsFetching === false &&
-        this.props.optionsDefault)
+      (prevProps.optionsFetching === true && this.props.optionsFetching === false && this.props.optionsDefault)
     ) {
       this.setState({
         selectedMetric: {
@@ -63,7 +58,7 @@ class MainContainer extends Component {
         trancheIds: this.props.options[label],
         instruments: this.props.optionsInstruments,
         ...(this.props.trancheId && { trancheId: this.props.trancheId }),
-      })
+      }),
     );
   };
 
@@ -82,17 +77,17 @@ class MainContainer extends Component {
     const { selectedMetric } = this.state;
 
     return (
-      <div data-testid="pricing-chart">
-          <MainGraph
-            companyId={companyId}
-            dataset={pricing}
-            options={options}
-            optionsInstruments={this.props.optionsInstruments}
-            width={1000}
-            height="500"
-            handleSelectSeries={this.handleSelectSeries}
-            selectedMetric={selectedMetric}
-          />
+      <div className={styles.mainGraph} data-testid="pricing-chart">
+        <MainGraph
+          companyId={companyId}
+          dataset={pricing}
+          options={options}
+          optionsInstruments={this.props.optionsInstruments}
+          width={1000}
+          height="500"
+          handleSelectSeries={this.handleSelectSeries}
+          selectedMetric={selectedMetric}
+        />
       </div>
     );
   }

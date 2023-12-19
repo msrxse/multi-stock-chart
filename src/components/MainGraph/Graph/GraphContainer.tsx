@@ -28,10 +28,7 @@ class GraphContainer extends Component {
     const { seriesList, selectedDates, width, height } = this.props;
 
     // this deals with re-scaling and re-drawing graphs on window resize
-    if (
-      prevProp.width !== this.props.width ||
-      prevProp.height !== this.props.height
-    ) {
+    if (prevProp.width !== this.props.width || prevProp.height !== this.props.height) {
       const scales = this.getScales(seriesList, selectedDates, width, height);
 
       this.updateGraphs(scales);
@@ -80,14 +77,7 @@ class GraphContainer extends Component {
           {this.state.scaleDomains && (
             <>
               <svg width={margin.yAxis} height={height}>
-                <Axis
-                  width={width}
-                  height={height}
-                  orientation="left"
-                  scale={scales.yScale}
-                  x={margin.yAxis}
-                  y={0}
-                />
+                <Axis width={width} height={height} orientation="left" scale={scales.yScale} x={margin.yAxis} y={0} />
               </svg>
               <svg
                 key={`graphSVG_${companyIdSelector}`}
@@ -108,9 +98,7 @@ class GraphContainer extends Component {
                     y={0}
                     xScale={scales.xScale}
                     yScale={scales.yScale}
-                    currentHoveredSerieIndex={
-                      this.props.currentHoveredSerieIndex
-                    }
+                    currentHoveredSerieIndex={this.props.currentHoveredSerieIndex}
                   />
                 </g>
               </svg>
