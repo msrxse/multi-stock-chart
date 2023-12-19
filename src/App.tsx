@@ -1,14 +1,6 @@
 import MainContainer from './components/MainGraph/MainContainer';
 
-import {
-  match,
-  dates,
-  series,
-  optionsFetching,
-  options,
-  optionsDefault,
-  optionsInstruments,
-} from './mainData.json';
+import { match, dates, series, optionsFetching, options, optionsDefault, optionsInstruments } from './mainData.json';
 
 import styles from './App.module.css';
 
