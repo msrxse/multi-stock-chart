@@ -4,5 +4,5 @@ import App from './App';
 
 test('renders learn react link', () => {
   render(<App />);
-  expect(true).toBeTruthy()
+  expect(true).toBeTruthy();
 });
