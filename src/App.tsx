@@ -1,14 +1,16 @@
 import MainContainer from './components/MainGraph/MainContainer';
 
-import { match, dates, series, optionsFetching, options, optionsDefault, optionsInstruments } from './mainData.json';
+import { dates, series, optionsFetching, options, optionsDefault, optionsInstruments } from './mainData.json';
 
 import styles from './App.module.css';
+
+const COMPANY_ID = 'Virgin Media';
 
 function App(): JSX.Element {
   return (
     <div className={styles.app}>
       <MainContainer
-        companyId={match.params.companyId}
+        companyId={COMPANY_ID}
         pricing={{ dates, series }}
         optionsFetching={optionsFetching}
         options={options}

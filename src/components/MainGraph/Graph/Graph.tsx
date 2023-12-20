@@ -11,37 +11,9 @@ import Axis from './Axis';
 import { colors } from '../utils/colors';
 import { margin } from '../utils/margin';
 import DateFilterLegend from './DateFilterLegend';
-
-import type { ScaleLinear } from 'd3-scale';
+import { GraphProps } from '../utils/types';
 
 import styles from './Graph.module.css';
-
-interface Series {
-  key: string;
-  amount: number;
-  color: number;
-  coupon: number;
-  currencyRefCode: string;
-  debtSecurityRefName: string;
-  issueDate: string;
-  maturity: string;
-  trancheId: string;
-  values: number[];
-}
-
-interface GraphProps {
-  keyVal: string;
-  animateTransition: boolean;
-  series: Series[];
-  selectedDates: number[];
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  xScale: ScaleLinear<number, number>;
-  yScale: ScaleLinear<number, number>;
-  currentHoveredSerieIndex: number;
-}
 
 interface Tranche {
   amount: string;
@@ -60,7 +32,7 @@ function Graph(props: GraphProps) {
   const [hoveredSimPathDate, setHoveredSimPathDate] = useState<string | null>(null);
   const [tooltipText, setTooltipText] = useState('');
 
-  const lineGenerator = line<number>().defined((d) => d !== null);
+  const [lineGenerator, setLineGenerator] = useState(() => line<number>().defined((d) => d !== null));
   const simPathsRef = useRef<SVGSVGElement>(null);
 
   /**
@@ -84,9 +56,9 @@ function Graph(props: GraphProps) {
 
     // generate simPaths from lineGenerator
     const simPaths = props.series.map((d) => lineGenerator(d.values));
+    // setLineGenerator(lineGenerator);
 
     // set new values to state
-    // setLineGenerator(lineGenerator);
     setSimPaths(simPaths);
   };
 
