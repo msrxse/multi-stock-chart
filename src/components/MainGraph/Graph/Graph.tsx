@@ -12,33 +12,56 @@ import { colors } from '../utils/colors';
 import { margin } from '../utils/margin';
 import DateFilterLegend from './DateFilterLegend';
 
+import type { ScaleLinear } from 'd3-scale';
+
 import styles from './Graph.module.css';
+
+interface Series {
+  key: string;
+  amount: number;
+  color: number;
+  coupon: number;
+  currencyRefCode: string;
+  debtSecurityRefName: string;
+  issueDate: string;
+  maturity: string;
+  trancheId: string;
+  values: number[];
+}
 
 interface GraphProps {
   keyVal: string;
   animateTransition: boolean;
-  series: any;
-  selectedDates: string[];
-  width: string;
-  height: string;
-  x: string;
-  y: string;
-  xScale: any;
-  yScale: any;
+  series: Series[];
+  selectedDates: number[];
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  xScale: ScaleLinear<number, number>;
+  yScale: ScaleLinear<number, number>;
   currentHoveredSerieIndex: number;
 }
 
+interface Tranche {
+  amount: string;
+  currencyRefCode: string;
+  coupon: string;
+  maturity: string;
+  debtSecurityRefName: string;
+}
+
 function Graph(props: GraphProps) {
-  const [lineGenerator, setLineGenerator] = useState(() => line().defined((d) => d !== null));
-  const [simPaths, setSimPaths] = useState([]);
-  const [hoveredSimPathId, setHoveredSimPathId] = useState(null);
+  const [simPaths, setSimPaths] = useState<(string | null)[]>([]);
+  const [hoveredSimPathId, setHoveredSimPathId] = useState<number | null>(null);
   const [tooltipXPos, setTooltipXPos] = useState(0);
   const [tooltipYPos, setTooltipYPos] = useState(0);
   const [currentSeriesSelected, setCurrentSeriesSelected] = useState([]);
-  const [hoveredSimPathDate, setHoveredSimPathDate] = useState('');
+  const [hoveredSimPathDate, setHoveredSimPathDate] = useState<string | null>(null);
   const [tooltipText, setTooltipText] = useState('');
 
-  const simPathsRef = useRef();
+  const lineGenerator = line<number>().defined((d) => d !== null);
+  const simPathsRef = useRef<SVGSVGElement>(null);
 
   /**
    * Just run once
@@ -58,6 +81,7 @@ function Graph(props: GraphProps) {
   const drawSimPaths = () => {
     lineGenerator.x((d, i) => props.xScale(props.selectedDates[i]));
     lineGenerator.y((d) => props.yScale(d));
+
     // generate simPaths from lineGenerator
     const simPaths = props.series.map((d) => lineGenerator(d.values));
 
@@ -189,7 +213,7 @@ function Graph(props: GraphProps) {
     return undefined;
   };
 
-  const formatTrancheName = (tranche) => {
+  const formatTrancheName = (tranche: Tranche) => {
     const { amount = '', currencyRefCode, coupon = '', maturity, debtSecurityRefName } = tranche;
 
     return `
