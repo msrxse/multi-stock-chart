@@ -41,3 +41,22 @@ export interface Scales {
   xScale: ScaleTime<number, number>;
   yScale: ScaleLinear<number, number>;
 }
+
+interface Dataset {
+  dates: number[];
+  series: Series[];
+}
+
+export interface MainGraphProps {
+  companyId: string;
+  dataset: Dataset;
+  options: any;
+  optionsInstruments: string;
+  width: number;
+  height: string;
+  handleSelectSeries: (_: string) => void;
+  selectedMetric: {
+    label: string;
+    value: string;
+  };
+}

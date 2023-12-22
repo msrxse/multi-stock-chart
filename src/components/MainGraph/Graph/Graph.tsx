@@ -69,13 +69,13 @@ function Graph(props: GraphProps) {
       // update lineGenerator from new scale and data
       lineGenerator.x((d, i) => props.xScale(props.selectedDates[i]));
       lineGenerator.y((d) => props.yScale(d));
+
       // generate simPaths from lineGenerator
       const newSimPaths = props.series.map((d) => lineGenerator(d.values));
 
-      // reDraw lines if props.series get added and
+      // reDraw lines if props.series get added
       if (newSimPaths.length !== simPaths.length) {
-        // re-draw simPaths in render
-        drawSimPaths();
+        setSimPaths(newSimPaths);
       } else {
         drawSimPaths();
 
