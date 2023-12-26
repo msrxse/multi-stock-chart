@@ -3,14 +3,14 @@ import type { ScaleLinear, ScaleTime } from 'd3-scale';
 export interface Series {
   key: string;
   amount: number;
-  color: number;
+  color: string;
   coupon: number;
   currencyRefCode: string;
   debtSecurityRefName: string;
   issueDate: string;
   maturity: string;
   trancheId: string;
-  values: number[];
+  values: (number | null)[];
 }
 
 export interface GraphProps {
@@ -51,12 +51,29 @@ export interface MainGraphProps {
   companyId: string;
   dataset: Dataset;
   options: any;
-  optionsInstruments: string;
+  optionsInstruments: any;
   width: number;
   height: string;
-  handleSelectSeries: (_: string) => void;
+  handleSelectSeries: ({ _trancheId }: { _trancheId: string }) => void;
   selectedMetric: {
     label: string;
     value: string;
   };
+}
+
+export interface MainContainerProps {
+  companyId: string;
+  pricing: Dataset;
+  options: any;
+  optionsDefault: string;
+  optionsInstruments: any;
+  handleSelectChartSeries: ({ _trancheId }: { _trancheId: string }) => void;
+}
+
+export interface Tranche {
+  amount: string;
+  currencyRefCode: string;
+  coupon: string;
+  maturity: string;
+  debtSecurityRefName: string;
 }

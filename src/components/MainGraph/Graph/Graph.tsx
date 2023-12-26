@@ -11,17 +11,9 @@ import Axis from './Axis';
 import { colors } from '../utils/colors';
 import { margin } from '../utils/margin';
 import DateFilterLegend from './DateFilterLegend';
-import { GraphProps } from '../utils/types';
+import { GraphProps, Tranche } from '../utils/types';
 
 import styles from './Graph.module.css';
-
-interface Tranche {
-  amount: string;
-  currencyRefCode: string;
-  coupon: string;
-  maturity: string;
-  debtSecurityRefName: string;
-}
 
 function Graph(props: GraphProps) {
   const [simPaths, setSimPaths] = useState<(string | null)[]>([]);
