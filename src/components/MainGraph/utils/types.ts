@@ -92,4 +92,4 @@ export interface AxisProps {
   tickNum: number;
 }
 
-export type DateRange = [Date | number, Date | number] | undefined;
+export type DateRange = [number, number] | undefined;

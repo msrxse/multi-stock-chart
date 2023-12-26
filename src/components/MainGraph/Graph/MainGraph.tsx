@@ -31,20 +31,6 @@ function MainGraph(props: MainGraphProps) {
   const [selectedSeriesIds, setSelectedSeriesIds] = useState<Map<string, boolean>>(new Map([]));
   const [currentHoveredSerieIndex, setCurrentHoveredSerieIndex] = useState(-1);
 
-  useEffect(() => {
-    initialize(props.dataset);
-  }, []);
-
-  /**
-   * keeps record of currently hovered serie
-   * Must be the index of the currently selected series (not just all series)
-   * Given trancheId returns the position on that series in seriesList
-   */
-  const getCurrentHoveredSerieIndex = (trancheId: string) => {
-    const hoveredIndex = seriesList.map((each) => each.key).indexOf(trancheId);
-    return setCurrentHoveredSerieIndex(hoveredIndex);
-  };
-
   /**
    * initialize() trigged on mount and dataset change
    * 1. Grab the series with its id
@@ -92,6 +78,20 @@ function MainGraph(props: MainGraphProps) {
     setDataLoaded(true);
   };
 
+  useEffect(() => {
+    initialize(props.dataset);
+  }, []);
+
+  /**
+   * keeps record of currently hovered serie
+   * Must be the index of the currently selected series (not just all series)
+   * Given trancheId returns the position on that series in seriesList
+   */
+  const getCurrentHoveredSerieIndex = (trancheId: string) => {
+    const hoveredIndex = seriesList.map((each) => each.key).indexOf(trancheId);
+    return setCurrentHoveredSerieIndex(hoveredIndex);
+  };
+
   /**
    *
    * @param {[ { key:0, values:[] }, ...{}, ]} seriesList
@@ -110,7 +110,7 @@ function MainGraph(props: MainGraphProps) {
 
       setSeriesList(filteredSeriesList);
       setSeriesListForBrush(seriesList);
-      setDateRange(dateRange);
+      setDateRange([selectionStartDate, selectionEndDate]);
       setSelectedDates(Array.from(newSelectedDates));
     }
   };

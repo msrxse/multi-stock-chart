@@ -21,7 +21,7 @@ function App(): JSX.Element {
         options={options}
         optionsDefault={optionsDefault}
         optionsInstruments={optionsInstruments}
-        handleSelectSeries={() => {}}
+        handleSelectSeries={() => console.log('New series clicked and data requested')}
       />
     </div>
   );
