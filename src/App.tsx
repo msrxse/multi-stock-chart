@@ -10,7 +10,7 @@ const COMPANY_ID = 'Virgin Media';
  * @param options -
  * @param optionsDefault -
  * @param optionsInstruments -
- * @param handleSelectChartSeries -
+ * @param handleSelectSeries -
  */
 function App(): JSX.Element {
   return (
@@ -21,7 +21,7 @@ function App(): JSX.Element {
         options={options}
         optionsDefault={optionsDefault}
         optionsInstruments={optionsInstruments}
-        handleSelectChartSeries={() => {}}
+        handleSelectSeries={() => {}}
       />
     </div>
   );

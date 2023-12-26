@@ -5,7 +5,7 @@ import { MainContainerProps } from './utils/types';
 import styles from './MainContainer.module.css';
 
 function MainContainer(props: MainContainerProps) {
-  const { companyId, pricing, options, optionsDefault, optionsInstruments, handleSelectChartSeries } = props;
+  const { companyId, pricing, options, optionsDefault, optionsInstruments } = props;
 
   const [selectedMetric, setSelectedMetric] = useState({
     label: '',
@@ -24,8 +24,8 @@ function MainContainer(props: MainContainerProps) {
   /**
    * Fires when user clicks on a chart label in legend
    */
-  const handleSelectSeries = ({ trancheId }) => {
-    handleSelectChartSeries({
+  const handleSelectSeries = ({ trancheId }: { trancheId: string }) => {
+    props.handleSelectSeries({
       trancheId,
       defaultSelected: selectedMetric.label,
     });
@@ -39,7 +39,7 @@ function MainContainer(props: MainContainerProps) {
         options={options}
         optionsInstruments={optionsInstruments}
         width={1000}
-        height="500"
+        height={500}
         handleSelectSeries={handleSelectSeries}
         selectedMetric={selectedMetric}
       />

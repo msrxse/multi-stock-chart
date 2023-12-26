@@ -9,7 +9,7 @@ import { max, extent } from 'd3-array';
 import { easeCubicOut } from 'd3-ease';
 import { margin } from '../utils/margin';
 import generateRamdomId from '../utils/generateRamdomId';
-import { colors } from '../utils/colors';
+// import { colors } from '../utils/colors';
 
 import styles from '../allCss.module.css';
 

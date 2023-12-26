@@ -8,38 +8,39 @@ import Brush from './Brush';
 import Legend from './Legend';
 import { margin } from '../utils/margin';
 import { getActiveSeriesIds, getFilteredActiveSeries, closestDateFound, filterByDate } from '../utils/utils';
-import { MainGraphProps } from '../utils/types';
+import { DateRange, Series, MainGraphProps } from '../utils/types';
 
 import styles from '../allCss.module.css';
 
 // const parseDate = utcParse('%Y-%m-%d');
 // const formatDate = utcFormat('%Y-%m-%d');
 
+interface InitializeProps {
+  dates: number[];
+  series: Series[];
+}
+
 function MainGraph(props: MainGraphProps) {
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [seriesList, setSeriesList] = useState([]);
-  const [selectedDates, setSelectedDates] = useState([]);
-  const [dateRange, setDateRange] = useState([]);
-  const [dates, setDates] = useState([]);
-  const [seriesListForBrush, setSeriesListForBrush] = useState([]);
+  const [seriesList, setSeriesList] = useState<Series[]>([]);
+  const [selectedDates, setSelectedDates] = useState<number[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange>();
+  const [dates, setDates] = useState<number[]>([]);
+  const [seriesListForBrush, setSeriesListForBrush] = useState<Series[]>([]);
   const [animateTransition, setAnimateTransition] = useState(true);
-  const [selectedSeriesIds, setSelectedSeriesIds] = useState(new Map());
+  const [selectedSeriesIds, setSelectedSeriesIds] = useState<Map<string, boolean>>(new Map([]));
   const [currentHoveredSerieIndex, setCurrentHoveredSerieIndex] = useState(-1);
 
   useEffect(() => {
     initialize(props.dataset);
   }, []);
 
-  useEffect(() => {
-    initialize(props.dataset);
-  }, [props.dataset.dates.length, props.dataset.series.length]);
-
   /**
    * keeps record of currently hovered serie
    * Must be the index of the currently selected series (not just all series)
    * Given trancheId returns the position on that series in seriesList
    */
-  const getCurrentHoveredSerieIndex = (trancheId) => {
+  const getCurrentHoveredSerieIndex = (trancheId: string) => {
     const hoveredIndex = seriesList.map((each) => each.key).indexOf(trancheId);
     return setCurrentHoveredSerieIndex(hoveredIndex);
   };
@@ -50,7 +51,7 @@ function MainGraph(props: MainGraphProps) {
    * 2. Define brush initial filter range
    * 3. Only show active series
    */
-  const initialize = ({ dates, series }) => {
+  const initialize = ({ dates, series }: InitializeProps) => {
     if (dates.length === 0 || series.length === 0) {
       return undefined;
     }
@@ -67,13 +68,14 @@ function MainGraph(props: MainGraphProps) {
     //   1. initial series always active
     //   2. any new one always active
     //   3. Any that the user hide leave it hidden
-    const newSelectedSeriesIds = series.map((serie) => {
+    const newSelectedSeriesIds: any[] = series.map((serie) => {
       if (selectedSeriesIds.has(serie.key)) {
         return [serie.key, selectedSeriesIds.get(serie.key)];
       }
 
       return [serie.key, true];
     });
+
     // filter active trancheIds and pick those series
     const activeSeriesIds = getActiveSeriesIds(newSelectedSeriesIds);
     const filteredActiveSeries = getFilteredActiveSeries(series, activeSeriesIds);
@@ -85,6 +87,7 @@ function MainGraph(props: MainGraphProps) {
     setDates(Array.from(dates)); // dates for brush
     setSeriesList(dateRandeFilteredSeries);
     setSeriesListForBrush(Array.from(filteredActiveSeries));
+
     setSelectedSeriesIds(new Map(newSelectedSeriesIds));
     setDataLoaded(true);
   };
@@ -94,20 +97,22 @@ function MainGraph(props: MainGraphProps) {
    * @param {[ { key:0, values:[] }, ...{}, ]} seriesList
    * @param {[ date, date ]} dateRange
    */
-  const update = (seriesList, dateRange) => {
-    const selectionStartDate = moment(dateRange[0]).valueOf();
-    const selectionEndDate = moment(dateRange[1]).valueOf();
-    const closestStartDateFound = closestDateFound(dates, selectionStartDate);
-    const closestEndDateFound = closestDateFound(dates, selectionEndDate);
-    const idxMin = dates.findIndex((x) => x === closestStartDateFound);
-    const idxMax = dates.findIndex((x) => x === closestEndDateFound);
-    const newSelectedDates = Array.from(dates).slice(idxMin, idxMax);
-    const filteredSeriesList = filterByDate(seriesList, idxMin, idxMax);
+  const update = (seriesList: Series[], dateRange: DateRange) => {
+    if (dateRange) {
+      const selectionStartDate = moment(dateRange[0]).valueOf();
+      const selectionEndDate = moment(dateRange[1]).valueOf();
+      const closestStartDateFound = closestDateFound(dates, selectionStartDate);
+      const closestEndDateFound = closestDateFound(dates, selectionEndDate);
+      const idxMin = dates.findIndex((x) => x === closestStartDateFound);
+      const idxMax = dates.findIndex((x) => x === closestEndDateFound);
+      const newSelectedDates = Array.from(dates).slice(idxMin, idxMax);
+      const filteredSeriesList = filterByDate(seriesList, idxMin, idxMax);
 
-    setSeriesList(filteredSeriesList);
-    setSeriesListForBrush(seriesList);
-    setDateRange(dateRange);
-    setSelectedDates(Array.from(newSelectedDates));
+      setSeriesList(filteredSeriesList);
+      setSeriesListForBrush(seriesList);
+      setDateRange(dateRange);
+      setSelectedDates(Array.from(newSelectedDates));
+    }
   };
 
   /**
@@ -117,7 +122,7 @@ function MainGraph(props: MainGraphProps) {
    *  2. If remove do remove from selection
    *
    */
-  const handleSelectSeries = (instrument) => {
+  const handleSelectSeries = (instrument: Series) => {
     const { dataset } = props;
     const { trancheId } = instrument;
     const newSelection = new Map(selectedSeriesIds);
@@ -125,7 +130,7 @@ function MainGraph(props: MainGraphProps) {
     // if value is there - toggle it , otherwise set it as true
     newSelection.set(trancheId, !newSelection.get(trancheId));
     // filter active trancheIds and pick those series
-    const activeSeriesIds = new Map([...newSelection].filter(([key, value]) => value === true));
+    const activeSeriesIds = new Map([...newSelection].filter(([, value]) => value === true));
     const filteredActiveSeries = getFilteredActiveSeries(dataset.series, activeSeriesIds);
 
     setSelectedSeriesIds(newSelection);
@@ -138,15 +143,17 @@ function MainGraph(props: MainGraphProps) {
         });
   };
 
-  const handleBrushRange = (dateRange) => {
-    // need dateRange as Unix Time in milliseconds (not an actual date)
-    const selectionStartDate = moment(dateRange[0]).valueOf();
-    const selectionEndDate = moment(dateRange[1]).valueOf();
+  const handleBrushRange = (dateRange: DateRange) => {
+    if (dateRange) {
+      // need dateRange as Unix Time in milliseconds (not an actual date)
+      const selectionStartDate = moment(dateRange[0]).valueOf();
+      const selectionEndDate = moment(dateRange[1]).valueOf();
 
-    setDateRange([selectionStartDate, selectionEndDate]);
-    setAnimateTransition(false);
+      setDateRange([selectionStartDate, selectionEndDate]);
+      setAnimateTransition(false);
 
-    update(seriesListForBrush, dateRange);
+      update(seriesListForBrush, dateRange);
+    }
   };
 
   const handleBrushStart = () => {
@@ -161,7 +168,7 @@ function MainGraph(props: MainGraphProps) {
   const pickInstrumentsBySelectedMetric = () => {
     const { selectedMetric, options, optionsInstruments } = props;
 
-    return options[selectedMetric.label].map((trancheId) => optionsInstruments[trancheId]);
+    return options[selectedMetric.label].map((trancheId: string) => optionsInstruments[trancheId]);
   };
 
   return (

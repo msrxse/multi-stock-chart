@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 export const margin = {
   yAxis: 80,
   top: 10,

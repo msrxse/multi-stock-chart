@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { axisLeft, axisBottom, axisRight } from 'd3-axis';
 import { timeFormat } from 'd3-time-format';
 import { select } from 'd3-selection';
+import { AxisProps } from '../utils/types';
 
 const monthDateFormat = "%d-%b-'%y";
 
@@ -115,12 +116,7 @@ class Axis extends Component {
   };
 
   render() {
-    return (
-      <g
-        ref={this.axisRef}
-        transform={`translate(${this.props.x}, ${this.props.y})`}
-      />
-    );
+    return <g ref={this.axisRef} transform={`translate(${this.props.x}, ${this.props.y})`} />;
   }
 }
 

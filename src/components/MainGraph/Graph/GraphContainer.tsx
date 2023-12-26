@@ -41,10 +41,10 @@ function GraphContainer(props: GraphContainerProps) {
     // set scale ranges to width and height of container
     const xScale = scaleUtc()
       .range([margin.left, width - margin.right])
-      .domain(timeDomain as unknown as [Date, Date]);
+      .domain(timeDomain as unknown as [number, number]);
     const yScale = scaleLinear()
       .range([height - margin.bottom, margin.top])
-      .domain(valueDomain as unknown as [Date, Date])
+      .domain(valueDomain as unknown as [number, number])
       .nice();
 
     return { xScale, yScale };
