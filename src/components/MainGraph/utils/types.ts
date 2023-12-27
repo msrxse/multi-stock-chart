@@ -93,3 +93,17 @@ export interface AxisProps {
 }
 
 export type DateRange = [number, number] | undefined;
+
+export interface BrushProps {
+  width: number;
+  height: number;
+  series: Series[];
+  dates: number[];
+  x: number;
+  y: number;
+  animateTransition: boolean;
+  dateRange: DateRange;
+  onBrushChange: () => void;
+  onBrushStart: () => void;
+  onBrushEnd: () => void;
+}

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { axisBottom } from 'd3-axis';
 import { scaleLinear, scaleUtc } from 'd3-scale';
 import { select } from 'd3-selection';
@@ -9,60 +9,92 @@ import { max, extent } from 'd3-array';
 import { easeCubicOut } from 'd3-ease';
 import { margin } from '../utils/margin';
 import generateRamdomId from '../utils/generateRamdomId';
-// import { colors } from '../utils/colors';
+import { BrushProps } from '../utils/types';
 
 import styles from '../allCss.module.css';
 
 const yearDateFormat = '%b-%Y';
 
-class Brush extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      scales: {},
-      // lineGenerator: line().defined(d => !isNaN(d)),
-      lineGenerator: line().defined((d) => d !== null),
-      simPaths: [],
-    };
-    this.xAxisRef = React.createRef();
-    this.simPathsRef = React.createRef();
-    this.brushRef = React.createRef();
-    this.brush = brushX()
-      .extent([
-        [margin.left, margin.top],
-        [this.props.width - margin.right, this.props.height - margin.bottom],
-      ])
-      .on('start', this.props.onBrushStart())
-      .on('end', this.brushEnded)
-      .on('brush', this.brushed);
-  }
+function Brush(props: BrushProps) {
+  const { x, y, series, dates, dateRange, width, height, animateTransition, onBrushChange, onBrushStart, onBrushEnd } =
+    props;
 
-  componentDidMount() {
-    this.setupBrush(this.props.series, this.props.dates, this.props.width, this.props.height);
-  }
+  const getScales = (series, dates, width, height) => {
+    // calculate scale domains
+    const timeDomain = extent(dates);
+    // const maxVal = max(series, sims => max(sims.values));
+    const allLinesData = series.flatMap((s) => s.values);
+    const valueDomain = extent(allLinesData);
+    // set scale ranges to width and height of container
+    const xScale = scaleUtc()
+      .range([margin.left, width - margin.right])
+      .domain(timeDomain);
+    const yScale = scaleLinear()
+      .range([height - margin.bottom, margin.top])
+      .domain(valueDomain)
+      .nice();
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props.width !== prevProps.width || this.props.height !== prevProps.height) {
-      const { series, dates, width, height } = this.props;
-      const { lineGenerator } = prevState;
+    return { xScale, yScale };
+  };
 
-      this.updateSimPaths(lineGenerator, series, dates, width, height, false);
+  const [scales, setScales] = useState(() => getScales(series, dates, width, height));
+  // const [lineGenerator, setLineGenerator] = useState(line().defined(d => !isNaN(d)));
+  const [lineGenerator, setLineGenerator] = useState(() => line().defined((d) => d !== null));
+  const [simPaths, setSimPaths] = useState([]);
 
+  const xAxisRef = useRef(null);
+  const simPathsRef = useRef(null);
+  const brushRef = useRef(null);
+
+  const brushed = (event) => {
+    const { selection } = event;
+    // on first load onBrushChange cant be call with range = undefined (scales needs to exists)
+    if (Object.keys(scales).length === 0 || selection === null) {
       return;
     }
-
-    if (this.props.series !== prevProps.series) {
-      const { series, dates, width, height, animateTransition } = this.props;
-      const { lineGenerator } = prevState;
-
-      this.updateSimPaths(lineGenerator, series, dates, width, height, animateTransition);
+    if (event.selection && event.sourceEvent !== null) {
+      const [x1, x2] = event.selection;
+      const range = [scales.xScale && scales.xScale.invert(x1), scales.xScale && scales.xScale.invert(x2)];
+      onBrushChange(range);
     }
-  }
+  };
 
-  updateSimPaths = (lineGenerator, series, dates, width, height, animateTransition) => {
-    const updatedScales = this.getScales(series, dates, width, height);
+  const brushEnded = (event) => {
+    if (!event.selection && brushRef.current) {
+      const selection = brushSelection(brushRef.current) ? null : scales.xScale.range();
 
-    if (this.simPathsRef.current) {
+      select(brushRef.current).call(brush.move, selection);
+    }
+
+    onBrushEnd();
+  };
+
+  const brush = brushX()
+    .extent([
+      [margin.left, margin.top],
+      [width - margin.right, height - margin.bottom],
+    ])
+    .on('start', onBrushStart())
+    .on('end', brushEnded)
+    .on('brush', brushed);
+  let xAxis = axisBottom();
+
+  useEffect(() => {
+    setupBrush(series, dates, width, height);
+  }, []);
+
+  useEffect(() => {
+    updateSimPaths(false);
+  }, [width, height]);
+
+  useEffect(() => {
+    updateSimPaths(animateTransition);
+  }, [series.length]);
+
+  const updateSimPaths = (animateTransition: boolean) => {
+    const updatedScales = getScales(series, dates, width, height);
+
+    if (simPathsRef.current) {
       // update scale and data
 
       lineGenerator.x((d, i) => updatedScales.xScale(dates[i]));
@@ -73,13 +105,11 @@ class Brush extends Component {
         return lineGenerator(d.values);
       });
 
-      this.setState({
-        lineGenerator,
-        simPaths,
-      });
+      setLineGenerator(() => lineGenerator);
+      setSimPaths(simPaths);
 
       // get svg node
-      const simPathsNode = select(this.simPathsRef.current);
+      const simPathsNode = select(simPathsRef.current);
 
       // update the paths with new data
       if (animateTransition) {
@@ -98,9 +128,7 @@ class Brush extends Component {
           .attr('stroke-opacity', 0.6)
           .on('end', () => {
             // set new values to state
-            this.setState({
-              scales: updatedScales,
-            });
+            setScales(updatedScales);
           });
       } else {
         simPathsNode
@@ -111,33 +139,30 @@ class Brush extends Component {
       }
     }
 
-    if (this.xAxisRef.current) {
-      this.xAxis.scale(updatedScales.xScale);
-      const xAxisNode = select(this.xAxisRef.current);
+    if (xAxisRef.current) {
+      xAxis.scale(updatedScales.xScale);
+      const xAxisNode = select(xAxisRef.current);
 
-      xAxisNode.call(this.xAxis);
+      xAxisNode.call(xAxis);
     }
-    if (this.brushRef.current) {
-      this.brush.extent([
+    if (brushRef.current) {
+      brush.extent([
         [margin.left, margin.top],
-        [this.props.width - margin.right, this.props.height - margin.bottom],
+        [width - margin.right, height - margin.bottom],
       ]);
-      const brushRefNode = select(this.brushRef.current);
+      const brushRefNode = select(brushRef.current);
 
       brushRefNode
-        .call(this.brush)
-        .call(this.brush.move, [
-          updatedScales.xScale(this.props.dateRange[0]),
-          updatedScales.xScale(this.props.dateRange[1]),
-        ]);
+        .call(brush)
+        .call(brush.move, [updatedScales.xScale(dateRange[0]), updatedScales.xScale(dateRange[1])]);
     }
+
     // save new scales to state if transition doesn't animate
-    this.setState({ scales: updatedScales });
+    setScales(updatedScales);
   };
 
-  setupBrush = (series, dates, width, height) => {
-    const { lineGenerator } = this.state;
-    const updatedScales = this.getScales(series, dates, width, height);
+  const setupBrush = (series, dates, width, height) => {
+    const updatedScales = getScales(series, dates, width, height);
 
     lineGenerator.x((d, i) => updatedScales.xScale(dates[i]));
     lineGenerator.y((d) => {
@@ -148,7 +173,7 @@ class Brush extends Component {
       return lineGenerator(d.values);
     });
 
-    this.xAxis = axisBottom()
+    xAxis = axisBottom()
       .scale(updatedScales.xScale)
       .tickFormat((date) => {
         // if (timeYear(date) < timeDay.offset(date, -1)) {
@@ -157,116 +182,59 @@ class Brush extends Component {
         //   return timeFormat('%Y')(date);
         // }
       })
-      .ticks(this.props.width / 80)
+      .ticks(width / 80)
       .tickSizeOuter(0);
-    if (this.xAxisRef.current) {
-      select(this.xAxisRef.current).call(this.xAxis);
+    if (xAxisRef.current) {
+      select(xAxisRef.current).call(xAxis);
     }
 
-    if (this.brushRef.current) {
-      const brushRefNode = select(this.brushRef.current);
+    if (brushRef.current) {
+      const brushRefNode = select(brushRef.current);
 
       brushRefNode
-        .call(this.brush)
-        .call(this.brush.move, [
-          updatedScales.xScale(this.props.dateRange[0]),
-          updatedScales.xScale(this.props.dateRange[1]),
-        ]);
+        .call(brush)
+        .call(brush.move, [updatedScales.xScale(dateRange[0]), updatedScales.xScale(dateRange[1])]);
     }
     // set new values to state
-    this.setState({
-      scales: updatedScales,
-      lineGenerator,
-      simPaths,
-    });
+    setScales(updatedScales);
+    setLineGenerator(() => lineGenerator);
+    setSimPaths(simPaths);
   };
 
-  getScales = (series, dates, width, height) => {
-    // calculate scale domains
-    const timeDomain = extent(dates);
-    // const maxVal = max(series, sims => max(sims.values));
-    const allLinesData = series.flatMap((s) => s.values);
-    const valueDomain = extent(allLinesData);
-    // set scale ranges to width and height of container
-    const xScale = scaleUtc()
-      .range([margin.left, width - margin.right])
-      .domain(timeDomain);
-    const yScale = scaleLinear()
-      .range([height - margin.bottom, margin.top])
-      .domain(valueDomain)
-      .nice();
-
-    return { xScale, yScale };
-  };
-
-  brushed = (event) => {
-    const { selection } = event;
-    // on first load onBrushChange cant be call with range = undefined (scales needs to exists)
-    if (Object.keys(this.state.scales).length === 0 || selection === null) {
-      return;
-    }
-    if (event.selection && event.sourceEvent !== null) {
-      const [x1, x2] = event.selection;
-      const range = [
-        this.state.scales.xScale && this.state.scales.xScale.invert(x1),
-        this.state.scales.xScale && this.state.scales.xScale.invert(x2),
-      ];
-      this.props.onBrushChange(range);
-    }
-  };
-
-  brushEnded = (event) => {
-    if (!event.selection && this.brushRef.current) {
-      const selection = brushSelection(this.brushRef.current) ? null : this.state.scales.xScale.range();
-
-      select(this.brushRef.current).call(this.brush.move, selection);
-    }
-
-    this.props.onBrushEnd();
-  };
-
-  render() {
-    const { series } = this.props;
-
-    return (
-      <div className={styles.brushWrapper}>
-        <svg
-          width={this.props.width}
-          height={this.props.height}
-          transform={`translate(${this.props.x}, ${this.props.y})`}
-        >
-          <g ref={this.xAxisRef} transform={`translate(0, ${this.props.height - margin.bottom})`} />
-          <g ref={this.simPathsRef}>
-            <rect
-              x={margin.left}
-              y={margin.top}
-              width={this.props.width - margin.left - margin.right}
-              height={this.props.height - margin.bottom - margin.top}
-              fill="#fbfbfb"
-            />
-            {
-              // visible simPaths
-              this.state.simPaths.map((simPath, i) => {
-                return (
-                  <path
-                    d={simPath}
-                    key={`simPath-${generateRamdomId()}`}
-                    id={`simPath-${i}`}
-                    className="simPath"
-                    fill="none"
-                    stroke={series[i]?.color}
-                    strokeWidth="1"
-                    strokeOpacity={0.4}
-                  />
-                );
-              })
-            }
-          </g>
-          <g ref={this.brushRef} />
-        </svg>
-      </div>
-    );
-  }
+  return (
+    <div className={styles.brushWrapper}>
+      <svg width={width} height={height} transform={`translate(${x}, ${y})`}>
+        <g ref={xAxisRef} transform={`translate(0, ${height - margin.bottom})`} />
+        <g ref={simPathsRef}>
+          <rect
+            x={margin.left}
+            y={margin.top}
+            width={width - margin.left - margin.right}
+            height={height - margin.bottom - margin.top}
+            fill="#fbfbfb"
+          />
+          {
+            // visible simPaths
+            simPaths.map((simPath, i) => {
+              return (
+                <path
+                  d={simPath}
+                  key={`simPath-${generateRamdomId()}`}
+                  id={`simPath-${i}`}
+                  className="simPath"
+                  fill="none"
+                  stroke={series[i]?.color}
+                  strokeWidth="1"
+                  strokeOpacity={0.4}
+                />
+              );
+            })
+          }
+        </g>
+        <g ref={brushRef} />
+      </svg>
+    </div>
+  );
 }
 
 export default Brush;
