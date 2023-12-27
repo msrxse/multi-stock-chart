@@ -48,7 +48,7 @@ function Graph(props: GraphProps) {
 
     // generate simPaths from lineGenerator
     const simPaths = props.series.map((d) => lineGenerator(d.values));
-    // setLineGenerator(lineGenerator);
+    setLineGenerator(() => lineGenerator);
 
     // set new values to state
     setSimPaths(simPaths);
@@ -86,7 +86,7 @@ function Graph(props: GraphProps) {
             // .attr('stroke', () => colors.green)
             .on('end', () => {
               // set new values to state
-              // setLineGenerator(lineGenerator);
+              setLineGenerator(() => lineGenerator);
               setSimPaths(simPaths);
             });
           const hoverPaths = simPathsNode
@@ -115,7 +115,7 @@ function Graph(props: GraphProps) {
             .attr('stroke-opacity', 1)
             .on('end', () => {
               // set new values to state
-              // setLineGenerator(lineGenerator);
+              setLineGenerator(() => lineGenerator);
               setSimPaths(simPaths);
             });
 

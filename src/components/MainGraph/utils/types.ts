@@ -47,27 +47,20 @@ interface Dataset {
   series: Series[];
 }
 
-type HandleSelectSeries = ({ trancheId, defaultSelected }: { trancheId: string; defaultSelected?: string }) => void;
+type HandleSelectSeries = (instrument: Instrument) => void;
 
 export interface MainGraphProps {
   companyId: string;
   dataset: Dataset;
-  options: any;
   optionsInstruments: any;
   width: number;
   height: number;
   handleSelectSeries: HandleSelectSeries;
-  selectedMetric: {
-    label: string;
-    value: string;
-  };
 }
 
 export interface MainContainerProps {
   companyId: string;
   pricing: Dataset;
-  options: any;
-  optionsDefault: string;
   optionsInstruments: any;
   handleSelectSeries: HandleSelectSeries;
 }
@@ -103,7 +96,31 @@ export interface BrushProps {
   y: number;
   animateTransition: boolean;
   dateRange: DateRange;
-  onBrushChange: () => void;
+  onBrushChange: (dateRange: DateRange) => void;
   onBrushStart: () => void;
   onBrushEnd: () => void;
+}
+
+export type Id = string;
+
+export interface Instrument {
+  trancheId: string;
+  amount: number;
+  coupon: number;
+  currencyRefCode: string;
+  debtSecurityRefName: string;
+  issueDate: string;
+  maturity: string;
+}
+
+export interface LegendProps {
+  handleSelectSeries: HandleSelectSeries;
+  optionsInstruments: Instrument[];
+  selectedSeriesIds: Map<string, boolean>;
+  series: Series[];
+  setCurrentHoveredSerieIndex: (trancheId: string | -1) => void;
+  height: number;
+  width: number;
+  x: number;
+  y: number;
 }

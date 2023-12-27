@@ -1,5 +1,5 @@
 import MainContainer from './components/MainGraph/MainContainer';
-import { dates, series, options, optionsDefault, optionsInstruments } from './mainData.json';
+import { dates, series, optionsInstruments } from './mainData.json';
 import styles from './App.module.css';
 
 const COMPANY_ID = 'Virgin Media';
@@ -18,8 +18,6 @@ function App(): JSX.Element {
       <MainContainer
         companyId={COMPANY_ID}
         pricing={{ dates, series }}
-        options={options}
-        optionsDefault={optionsDefault}
         optionsInstruments={optionsInstruments}
         handleSelectSeries={() => console.log('New series clicked and data requested')}
       />

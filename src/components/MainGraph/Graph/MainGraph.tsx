@@ -8,7 +8,7 @@ import Brush from './Brush';
 import Legend from './Legend';
 import { margin } from '../utils/margin';
 import { getActiveSeriesIds, getFilteredActiveSeries, closestDateFound, filterByDate } from '../utils/utils';
-import { DateRange, Series, MainGraphProps } from '../utils/types';
+import { DateRange, Series, MainGraphProps, Instrument } from '../utils/types';
 
 import styles from '../allCss.module.css';
 
@@ -87,7 +87,10 @@ function MainGraph(props: MainGraphProps) {
    * Must be the index of the currently selected series (not just all series)
    * Given trancheId returns the position on that series in seriesList
    */
-  const getCurrentHoveredSerieIndex = (trancheId: string) => {
+  const getCurrentHoveredSerieIndex = (trancheId: string | -1) => {
+    if (trancheId === -1) {
+      return setCurrentHoveredSerieIndex(-1);
+    }
     const hoveredIndex = seriesList.map((each) => each.key).indexOf(trancheId);
     return setCurrentHoveredSerieIndex(hoveredIndex);
   };
@@ -122,7 +125,7 @@ function MainGraph(props: MainGraphProps) {
    *  2. If remove do remove from selection
    *
    */
-  const handleSelectSeries = (instrument: Series) => {
+  const handleSelectSeries = (instrument: Instrument) => {
     const { dataset } = props;
     const { trancheId } = instrument;
     const newSelection = new Map(selectedSeriesIds);
@@ -138,9 +141,7 @@ function MainGraph(props: MainGraphProps) {
 
     return selectedSeriesIds.has(trancheId)
       ? update(filteredActiveSeries, dateRange)
-      : props.handleSelectSeries({
-          trancheId,
-        });
+      : props.handleSelectSeries(instrument);
   };
 
   const handleBrushRange = (dateRange: DateRange) => {
@@ -162,13 +163,6 @@ function MainGraph(props: MainGraphProps) {
 
   const handleBrushEnd = () => {
     // setAnimateTransition(false);
-  };
-
-  // Legend will show only instruments under the selected metric
-  const pickInstrumentsBySelectedMetric = () => {
-    const { selectedMetric, options, optionsInstruments } = props;
-
-    return options[selectedMetric.label].map((trancheId: string) => optionsInstruments[trancheId]);
   };
 
   return (
@@ -200,7 +194,7 @@ function MainGraph(props: MainGraphProps) {
           <Legend
             width={props.width}
             height={120} // see css to change height
-            optionsInstruments={pickInstrumentsBySelectedMetric()}
+            optionsInstruments={Object.values(props.optionsInstruments)}
             handleSelectSeries={handleSelectSeries}
             x={margin.yAxis}
             y={0}
