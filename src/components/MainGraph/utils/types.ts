@@ -83,13 +83,13 @@ export interface Tranche {
 export interface AxisProps {
   height: number;
   keyVal: string;
-  orientation: string;
+  orientation: 'left' | 'right' | 'bottom';
   scale: ScaleTime<number, number>;
   view: string;
   width: number;
   x: number;
   y: number;
-  tickNum: number;
+  tickNum?: number;
 }
 
 export type DateRange = [number, number] | undefined;

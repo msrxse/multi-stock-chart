@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import cn from 'classnames';
 // import { colors } from '../utils/colors';
 // import { margin } from '../utils/margin';
@@ -8,13 +8,7 @@ import Icon from '../../Icon/Icon';
 import styles from '../allCss.module.css';
 
 function formatTrancheName(tranche) {
-  const {
-    amount = '',
-    currencyRefCode,
-    coupon = '',
-    maturity,
-    debtSecurityRefName,
-  } = tranche;
+  const { amount = '', currencyRefCode, coupon = '', maturity, debtSecurityRefName } = tranche;
 
   return `
     ${currencyRefCode}
@@ -32,14 +26,12 @@ function Legend(props) {
    * Generate array of colors from the index of optionsInstruments mapping
    * Returns array of arrays
    *  - the indexes corresponding to selected series has a color others are empty array
-   *  - to keep that index is important so the color is the same as in brush ans graph components
+   *  - to keep that index is important so the color is the same as in brush and graph components
    */
   useEffect(() => {
     const colors = Object.values(props.optionsInstruments).map((instrument) => {
       return props.series
-        .map((serie) =>
-          serie.key === instrument.trancheId ? serie.color : undefined
-        )
+        .map((serie) => (serie.key === instrument.trancheId ? serie.color : undefined))
         .filter((x) => x);
     });
 
@@ -58,9 +50,7 @@ function Legend(props) {
           <li
             key={instrument.trancheId}
             className={cn(styles.listItem, {
-              [styles.active]: Array.from(activeSeriesIds.keys()).includes(
-                instrument.trancheId
-              ),
+              [styles.active]: Array.from(activeSeriesIds.keys()).includes(instrument.trancheId),
             })}
           >
             <button
@@ -68,9 +58,7 @@ function Legend(props) {
               className={styles.listButton}
               onClick={() => props.handleSelectSeries(instrument)}
               onKeyDown={() => {}}
-              onMouseEnter={() =>
-                props.setCurrentHoveredSerieIndex(instrument.trancheId)
-              }
+              onMouseEnter={() => props.setCurrentHoveredSerieIndex(instrument.trancheId)}
               onMouseLeave={() => props.setCurrentHoveredSerieIndex(-1)}
               onFocus={() => {}}
             >

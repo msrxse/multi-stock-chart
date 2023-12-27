@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useEffect, useRef } from 'react';
 import { axisLeft, axisBottom, axisRight } from 'd3-axis';
 import { timeFormat } from 'd3-time-format';
 import { select } from 'd3-selection';
@@ -18,106 +18,104 @@ function formatTitle(s) {
   return s.replace('_', ' ');
 }
 
-class Axis extends Component {
-  constructor(props) {
-    super(props);
-    this.axisRef = React.createRef();
-  }
+function Axis(props: AxisProps) {
+  const axisRef = useRef(null);
 
-  componentDidMount() {
-    this.drawAxis();
-  }
+  useEffect(() => {
+    drawAxis();
+  }, []);
 
-  componentDidUpdate(prevProps) {
-    this.updateAxis();
-  }
+  useEffect(() => {
+    updateAxis();
+  }, [props]);
 
-  drawAxis = () => {
-    if (this.props.orientation === 'left') {
-      this.axis = axisLeft()
-        .scale(this.props.scale)
-        .ticks(this.props.tickNum ? this.props.tickNum : 10)
+  let axis =
+    (props.orientation === 'left' && axisLeft()) || (props.orientation === 'right' && axisRight()) || axisBottom();
+
+  const drawAxis = () => {
+    if (props.orientation === 'left') {
+      axis = axisLeft()
+        .scale(props.scale)
+        .ticks(props.tickNum ? props.tickNum : 10)
         .tickFormat((d) => addCommas(d));
 
-      if (this.axisRef.current) {
-        select(this.axisRef.current).call(this.axis);
+      if (axisRef.current) {
+        select(axisRef.current).call(axis);
       }
-    } else if (this.props.orientation === 'right') {
-      this.axis = axisRight()
-        .scale(this.props.scale)
+    } else if (props.orientation === 'right') {
+      axis = axisRight()
+        .scale(props.scale)
         .tickFormat((d) => addCommas(d));
 
-      if (this.axisRef.current) {
-        select(this.axisRef.current).call(this.axis);
+      if (axisRef.current) {
+        select(axisRef.current).call(axis);
       }
     } else {
-      if (this.props.view === 'graph') {
-        this.axis = axisBottom()
-          .scale(this.props.scale)
+      if (props.view === 'graph') {
+        axis = axisBottom()
+          .scale(props.scale)
           .tickFormat(timeFormat(monthDateFormat))
-          .ticks(this.props.width / 80)
+          .ticks(props.width / 80)
           .tickSizeOuter(0);
-      } else if (this.props.view === 'chart') {
-        this.axis = axisBottom()
-          .scale(this.props.scale)
+      } else if (props.view === 'chart') {
+        axis = axisBottom()
+          .scale(props.scale)
           .tickFormat((d) => formatTitle(d))
-          .ticks(this.props.width / 80)
+          .ticks(props.width / 80)
           .tickSizeOuter(0);
       } else {
-        this.axis = axisBottom()
-          .scale(this.props.scale)
-          .ticks(this.props.width / 80)
+        axis = axisBottom()
+          .scale(props.scale)
+          .ticks(props.width / 80)
           .tickSizeOuter(0);
       }
 
-      if (this.axisRef.current) {
-        if (this.props.view === 'chart') {
-          select(this.axisRef.current)
-            .call(this.axis)
+      if (axisRef.current) {
+        if (props.view === 'chart') {
+          select(axisRef.current)
+            .call(axis)
             .call((g) => g.select('.domain').remove())
             .call((g) => g.selectAll('text').attr('dy', '2em'));
         } else {
-          select(this.axisRef.current)
-            .call(this.axis)
+          select(axisRef.current)
+            .call(axis)
             .call((g) => g.select('.domain').remove());
         }
       }
     }
   };
 
-  updateAxis = () => {
-    if (this.axisRef.current) {
-      const axisNode = select(this.axisRef.current);
+  const updateAxis = () => {
+    if (axisRef.current) {
+      const axisNode = select(axisRef.current);
 
-      this.axis.scale(this.props.scale);
-      if (this.props.orientation === 'left') {
+      axis.scale(props.scale);
+      if (props.orientation === 'left') {
         // update y axis
         axisNode
           .transition()
           .duration(1000)
-          .call(this.axis)
+          .call(axis)
           .call((g) => g.select('.domain').remove());
       } else {
         // update x axis
-        axisNode.transition().duration(1000).call(this.axis);
+        axisNode.transition().duration(1000).call(axis);
       }
 
-      if (this.props.view !== 'graph') {
-        select(this.axisRef.current)
-          .call(this.axis)
+      if (props.view !== 'graph') {
+        select(axisRef.current)
+          .call(axis)
           .call((g) => g.select('.domain').remove());
       }
-      if (this.props.view === 'chart') {
-        select(this.axisRef.current)
-          .call(this.axis)
+      if (props.view === 'chart') {
+        select(axisRef.current)
+          .call(axis)
           .call((g) => g.selectAll('text').attr('dy', '2em'));
       }
     }
   };
 
-  render() {
-    return <g ref={this.axisRef} transform={`translate(${this.props.x}, ${this.props.y})`} />;
-  }
+  return <g ref={axisRef} transform={`translate(${props.x}, ${props.y})`} />;
 }
 
 export default Axis;
