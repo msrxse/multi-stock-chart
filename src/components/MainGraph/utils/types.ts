@@ -51,15 +51,6 @@ export interface Dataset {
 export type HandleSelectSeries = (instrument: Instrument) => void;
 export type OptionsInstrumentsDict = { [key: string]: Instrument };
 
-export interface MainGraphProps {
-  companyId: string;
-  dataset: Dataset;
-  optionsInstruments: OptionsInstrumentsDict;
-  width: number;
-  height: number;
-  handleSelectSeries: HandleSelectSeries;
-}
-
 export interface MainGraphInitializeProps {
   dates: number[];
   series: Series[];

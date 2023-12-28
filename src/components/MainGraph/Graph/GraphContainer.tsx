@@ -10,6 +10,7 @@ import styles from '../allCss.module.css';
 
 function GraphContainer(props: GraphContainerProps) {
   const { companyId, width, height, seriesList, selectedDates } = props;
+
   const getScales = () => {
     // calculate scale domains
     const timeDomain = extent(selectedDates);
