@@ -75,10 +75,8 @@ export interface Tranche {
 
 export interface AxisProps {
   height: number;
-  keyVal: string;
   orientation: 'left' | 'right' | 'bottom';
-  scale: ScaleTime<number, number>;
-  view: string;
+  scale: ScaleTime<number, number> | ScaleLinear<number, number>;
   width: number;
   x: number;
   y: number;

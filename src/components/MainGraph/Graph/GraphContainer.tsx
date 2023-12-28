@@ -10,16 +10,24 @@ import styles from '../allCss.module.css';
 
 function GraphContainer(props: GraphContainerProps) {
   const { companyId, width, height, seriesList, selectedDates } = props;
-  const [scales, setScales] = useState<Scales>();
-  const [scaleDomains, setScaleDomains] = useState(false);
+  const getScales = () => {
+    // calculate scale domains
+    const timeDomain = extent(selectedDates);
+    const allLinesData = seriesList.flatMap((series: Series) => series.values);
+    const valueDomain = extent(allLinesData as number[]);
+    // set scale ranges to width and height of container
+    const xScale = scaleUtc()
+      .range([margin.left, width - margin.right])
+      .domain(timeDomain as unknown as [number, number]);
+    const yScale = scaleLinear()
+      .range([height - margin.bottom, margin.top])
+      .domain(valueDomain as unknown as [number, number])
+      .nice();
 
-  useEffect(() => {
-    if (seriesList.length > 0) {
-      const scales = getScales();
-      setScaleDomains(true);
-      setScales(scales);
-    }
-  }, []);
+    return { xScale, yScale };
+  };
+  const [scales, setScales] = useState<Scales>(getScales());
+  const [scaleDomains, setScaleDomains] = useState(false);
 
   // this deals with re-scaling and re-drawing graphs on window resize
   useEffect(() => {
@@ -32,23 +40,6 @@ function GraphContainer(props: GraphContainerProps) {
     setScaleDomains(true);
     setScales(scales);
   }, [seriesList]);
-
-  const getScales = () => {
-    // calculate scale domains
-    const timeDomain = extent(selectedDates);
-    const allLinesData = seriesList.flatMap((series: Series) => series.values);
-    const valueDomain = extent(allLinesData);
-    // set scale ranges to width and height of container
-    const xScale = scaleUtc()
-      .range([margin.left, width - margin.right])
-      .domain(timeDomain as unknown as [number, number]);
-    const yScale = scaleLinear()
-      .range([height - margin.bottom, margin.top])
-      .domain(valueDomain as unknown as [number, number])
-      .nice();
-
-    return { xScale, yScale };
-  };
 
   // replace spaces for dash and all lowercase
   const companyIdSelector = companyId.replace(/\s+/g, '-').toLowerCase();

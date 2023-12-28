@@ -18,6 +18,11 @@ function formatTitle(s) {
   return s.replace('_', ' ');
 }
 
+/**
+ *
+ * @param props
+ * @returns
+ */
 function Axis(props: AxisProps) {
   const axisRef = useRef(null);
 
