@@ -1,24 +1,14 @@
 import { useEffect, useState } from 'react';
-// import { utcParse, utcFormat } from 'd3-time-format';
-// import { timeDay } from 'd3-time';
 import moment from 'moment';
 import { extent } from 'd3-array';
-import GraphContainer from './GraphContainer';
-import Brush from './Brush';
-import Legend from './Legend';
-import { margin } from '../utils/margin';
-import { getActiveSeriesIds, getFilteredActiveSeries, closestDateFound, filterByDate } from '../utils/utils';
-import { DateRange, Series, MainGraphProps, Instrument } from '../utils/types';
+import GraphContainer from './Graph/GraphContainer';
+import Brush from './Graph/Brush';
+import Legend from './Graph/Legend';
+import { margin } from './utils/margin';
+import { getActiveSeriesIds, getFilteredActiveSeries, closestDateFound, filterByDate } from './utils/utils';
+import { DateRange, Series, MainGraphProps, Instrument, MainGraphInitializeProps } from './utils/types';
 
-import styles from '../allCss.module.css';
-
-// const parseDate = utcParse('%Y-%m-%d');
-// const formatDate = utcFormat('%Y-%m-%d');
-
-interface InitializeProps {
-  dates: number[];
-  series: Series[];
-}
+import styles from './MainGraph.module.css';
 
 function MainGraph(props: MainGraphProps) {
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -28,7 +18,7 @@ function MainGraph(props: MainGraphProps) {
   const [dates, setDates] = useState<number[]>([]);
   const [seriesListForBrush, setSeriesListForBrush] = useState<Series[]>([]);
   const [animateTransition, setAnimateTransition] = useState(true);
-  const [selectedSeriesIds, setSelectedSeriesIds] = useState<Map<string, boolean>>(new Map([]));
+  const [selectedSeriesIds, setSelectedSeriesIds] = useState<Map<string, boolean>>(new Map());
   const [currentHoveredSerieIndex, setCurrentHoveredSerieIndex] = useState(-1);
 
   /**
@@ -37,7 +27,7 @@ function MainGraph(props: MainGraphProps) {
    * 2. Define brush initial filter range
    * 3. Only show active series
    */
-  const initialize = ({ dates, series }: InitializeProps) => {
+  const initialize = ({ dates, series }: MainGraphInitializeProps) => {
     if (dates.length === 0 || series.length === 0) {
       return undefined;
     }
@@ -54,7 +44,7 @@ function MainGraph(props: MainGraphProps) {
     //   1. initial series always active
     //   2. any new one always active
     //   3. Any that the user hide leave it hidden
-    const newSelectedSeriesIds: any[] = series.map((serie) => {
+    const newSelectedSeriesIds = series.map((serie) => {
       if (selectedSeriesIds.has(serie.key)) {
         return [serie.key, selectedSeriesIds.get(serie.key)];
       }
@@ -74,7 +64,7 @@ function MainGraph(props: MainGraphProps) {
     setSeriesList(dateRandeFilteredSeries);
     setSeriesListForBrush(Array.from(filteredActiveSeries));
 
-    setSelectedSeriesIds(new Map(newSelectedSeriesIds));
+    setSelectedSeriesIds(new Map(newSelectedSeriesIds as [string, boolean][]));
     setDataLoaded(true);
   };
 

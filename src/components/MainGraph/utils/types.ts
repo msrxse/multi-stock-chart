@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import type { ScaleLinear, ScaleTime } from 'd3-scale';
 
 export interface Series {
@@ -48,21 +49,20 @@ interface Dataset {
 }
 
 type HandleSelectSeries = (instrument: Instrument) => void;
+type Dict = { [key: string]: Instrument };
 
 export interface MainGraphProps {
   companyId: string;
   dataset: Dataset;
-  optionsInstruments: any;
+  optionsInstruments: Dict;
   width: number;
   height: number;
   handleSelectSeries: HandleSelectSeries;
 }
 
-export interface MainContainerProps {
-  companyId: string;
-  pricing: Dataset;
-  optionsInstruments: any;
-  handleSelectSeries: HandleSelectSeries;
+export interface MainGraphInitializeProps {
+  dates: number[];
+  series: Series[];
 }
 
 export interface Tranche {
