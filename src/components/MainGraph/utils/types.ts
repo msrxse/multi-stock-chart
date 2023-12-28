@@ -12,6 +12,7 @@ export interface Series {
   maturity: string;
   trancheId: string;
   values: (number | null)[];
+  tooltipYPos?: number;
 }
 
 export interface GraphProps {
@@ -54,14 +55,6 @@ export type OptionsInstrumentsDict = { [key: string]: Instrument };
 export interface MainGraphInitializeProps {
   dates: number[];
   series: Series[];
-}
-
-export interface Tranche {
-  amount: string;
-  currencyRefCode: string;
-  coupon: string;
-  maturity: string;
-  debtSecurityRefName: string;
 }
 
 export interface AxisProps {

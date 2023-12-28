@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
+import { useState, useRef, useEffect, MouseEvent } from 'react';
 import moment from 'moment';
 import { line } from 'd3-shape';
 import { bisectLeft, least, ascending } from 'd3-array';
@@ -11,20 +13,20 @@ import Axis from './Axis';
 import { colors } from '../utils/colors';
 import { margin } from '../utils/margin';
 import DateFilterLegend from './DateFilterLegend';
-import { GraphProps, Tranche } from '../utils/types';
+import { GraphProps, Series } from '../utils/types';
 
 import styles from './Graph.module.css';
 
 function Graph(props: GraphProps) {
-  const [simPaths, setSimPaths] = useState<(string | null)[]>([]);
+  const [simPaths, setSimPaths] = useState<(string | undefined)[]>([]);
   const [hoveredSimPathId, setHoveredSimPathId] = useState<number | null>(null);
   const [tooltipXPos, setTooltipXPos] = useState(0);
   const [tooltipYPos, setTooltipYPos] = useState(0);
-  const [currentSeriesSelected, setCurrentSeriesSelected] = useState([]);
+  const [currentSeriesSelected, setCurrentSeriesSelected] = useState<Series[]>([]);
   const [hoveredSimPathDate, setHoveredSimPathDate] = useState<string | null>(null);
   const [tooltipText, setTooltipText] = useState('');
 
-  const [lineGenerator, setLineGenerator] = useState(() => line<number>().defined((d) => d !== null));
+  const [lineGenerator, setLineGenerator] = useState(() => line<number | null>().defined((d) => d !== null));
   const simPathsRef = useRef<SVGSVGElement>(null);
 
   /**
@@ -47,7 +49,10 @@ function Graph(props: GraphProps) {
     lineGenerator.y((d) => props.yScale(d));
 
     // generate simPaths from lineGenerator
-    const simPaths = props.series.map((d) => lineGenerator(d.values));
+    const simPaths = props.series.map((d) => {
+      return lineGenerator(d.values);
+    });
+
     setLineGenerator(() => lineGenerator);
 
     // set new values to state
@@ -63,7 +68,9 @@ function Graph(props: GraphProps) {
       lineGenerator.y((d) => props.yScale(d));
 
       // generate simPaths from lineGenerator
-      const newSimPaths = props.series.map((d) => lineGenerator(d.values));
+      const newSimPaths = props.series.map((d) => {
+        return lineGenerator(d.values);
+      });
 
       // reDraw lines if props.series get added
       if (newSimPaths.length !== simPaths.length) {
@@ -96,28 +103,28 @@ function Graph(props: GraphProps) {
             // hoverPaths.enter().append('path')
             .attr('d', (d) => lineGenerator(d.values));
         } else {
-          const paths = simPathsNode
-            .selectAll('.simPath')
-            .data(props.series)
-            // paths.exit().remove()
-            // paths.enter().append('path')
-            .transition()
-            .duration(300)
-            .ease(easeCubicIn)
-            .attr('stroke-opacity', 0)
-            .transition()
-            .duration(10)
-            .attr('d', (d) => lineGenerator(d.values))
-            .transition()
-            .duration(400)
-            .ease(easeCubicOut)
-            // .attr('stroke', () => colors.green)
-            .attr('stroke-opacity', 1)
-            .on('end', () => {
-              // set new values to state
-              setLineGenerator(() => lineGenerator);
-              setSimPaths(simPaths);
-            });
+          // const paths = simPathsNode
+          //   .selectAll('.simPath')
+          //   .data(props.series)
+          //   // paths.exit().remove()
+          //   // paths.enter().append('path')
+          //   .transition()
+          //   .duration(300)
+          //   .ease(easeCubicIn)
+          //   .attr('stroke-opacity', 0)
+          //   .transition()
+          //   .duration(10)
+          //   .attr('d', (d) => lineGenerator(d.values))
+          //   .transition()
+          //   .duration(400)
+          //   .ease(easeCubicOut)
+          //   // .attr('stroke', () => colors.green)
+          //   .attr('stroke-opacity', 1)
+          //   .on('end', () => {
+          //     // set new values to state
+          //     setLineGenerator(() => lineGenerator);
+          //     setSimPaths(simPaths);
+          //   });
 
           simPathsNode
             .selectAll('.simPath-hover')
@@ -133,27 +140,29 @@ function Graph(props: GraphProps) {
     setHoveredSimPathDate(null);
   };
 
-  const handleBetterSimMouseHover = (event) => {
+  const handleBetterSimMouseHover = (event: MouseEvent<SVGRectElement>) => {
     event.preventDefault();
     const selector = `.graphSVG_${props.keyVal}`;
-    const node = document.querySelector(selector);
+    const node: SVGSVGElement | null = document.querySelector(selector);
 
     if (!node) {
       return undefined;
     }
-    let point = node.createSVGPoint();
+
+    let point: SVGPoint = node.createSVGPoint();
 
     point.x = event.clientX;
     point.y = event.clientY;
-    point = point.matrixTransform(node.getScreenCTM().inverse());
-    const xm = props.xScale.invert(point.x);
+    point = point.matrixTransform(node.getScreenCTM()?.inverse());
+    const xm = props.xScale.invert(point.x).valueOf();
     const ym = props.yScale.invert(point.y);
+
     const i1 = bisectLeft(props.selectedDates, xm, 1);
     const i0 = i1 - 1;
     const i = xm - props.selectedDates[i0] > props.selectedDates[i1] - xm ? i1 : i0;
     const s = least(props.series, (d) => Math.abs(d.values[i] - ym));
     // list of props.series in the path of yPos
-    const currentSeriesSelected = props.series.reduce((acc, serie) => {
+    const currentSeriesSelected: Series[] = props.series.reduce<Series[]>((acc, serie) => {
       if (serie.values[i]) {
         acc.push({
           ...serie,
@@ -177,7 +186,7 @@ function Graph(props: GraphProps) {
     return undefined;
   };
 
-  const formatTrancheName = (tranche: Tranche) => {
+  const formatTrancheName = (tranche: Series) => {
     const { amount = '', currencyRefCode, coupon = '', maturity, debtSecurityRefName } = tranche;
 
     return `
@@ -200,7 +209,7 @@ function Graph(props: GraphProps) {
       })
       .map((serie) => (
         <div key={`serie-${generateRamdomId()}`} className={styles.popover}>
-          <Icon icon="dot" color={serie.color} size="16" />
+          <Icon color={serie.color} size="16" />
 
           {tooltipText === serie.key ? (
             <div className={styles.hoveredSerieInPopover}>{formatTrancheName(serie)}</div>
@@ -212,7 +221,7 @@ function Graph(props: GraphProps) {
   };
 
   const getColorOfSelectedSeries = () => {
-    return props.series.map((serie) => (hoveredSimPathId === serie.key ? serie.color : colors.gray));
+    return props.series.map((serie, i) => (hoveredSimPathId === i ? serie.color : colors.gray))[0];
   };
 
   return (
@@ -271,20 +280,14 @@ function Graph(props: GraphProps) {
             );
           })
         }
+
         <Popover
           key="sim-tooltip"
           title={hoveredSimPathDate}
           content={getPopoverContent()}
-          placement="rightBottom"
-          visible={hoveredSimPathDate}
-          // visible
-          // align={{
-          //     points: ['bc', 'tc'],        // align top left point of sourceNode with top right point of targetNode
-          //     offset: [10, 20],            // the offset sourceNode by 10px in x and 20px in y,
-          //     targetOffset: ['0%','0%'], // the offset targetNode by 30% of targetNode width in x and 40% of targetNode height in y,
-          //     overflow: { adjustX: true, adjustY: true }, // auto adjust position when sourceNode is overflowed
-          //   }}
-          data-html="true"
+          placement="right"
+          trigger="hover"
+          open={!!hoveredSimPathDate}
         >
           <>
             <circle
@@ -330,15 +333,12 @@ function Graph(props: GraphProps) {
 
       <g>
         <Axis
-          keyVal={props.keyVal}
           width={props.width - margin.left}
           height={props.height}
           orientation="bottom"
-          view="graph"
           scale={props.xScale}
           x={0}
           y={props.height - margin.bottom}
-          // y={0}
         />
       </g>
     </g>

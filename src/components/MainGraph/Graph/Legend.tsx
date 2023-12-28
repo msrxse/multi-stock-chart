@@ -49,7 +49,7 @@ function Legend(props: LegendProps) {
               onMouseLeave={() => props.setCurrentHoveredSerieIndex(-1)}
               onFocus={() => {}}
             >
-              <Icon icon="dot" size="8" color={grabInstrumentColorFromSerie(instrument.trancheId)} />
+              <Icon size="8" color={grabInstrumentColorFromSerie(instrument.trancheId)} />
               <span>{formatTrancheName(instrument)}</span>
             </button>
           </li>
