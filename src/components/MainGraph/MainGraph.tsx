@@ -6,11 +6,12 @@ import Brush from './Graph/Brush';
 import Legend from './Graph/Legend';
 import { margin } from './utils/margin';
 import { getActiveSeriesIds, getFilteredActiveSeries, closestDateFound, filterByDate } from './utils/utils';
-import { DateRange, Series, MainGraphProps, Instrument, MainGraphInitializeProps } from './utils/types';
+import { DateRange, Series, Instrument, MainGraphInitializeProps } from './utils/types';
+import { useAppChartContext } from './hooks/useAppContext';
 
 import styles from './MainGraph.module.css';
 
-function MainGraph(props: MainGraphProps) {
+function MainGraph() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [seriesList, setSeriesList] = useState<Series[]>([]);
   const [selectedDates, setSelectedDates] = useState<number[]>([]);
@@ -20,6 +21,8 @@ function MainGraph(props: MainGraphProps) {
   const [animateTransition, setAnimateTransition] = useState(true);
   const [selectedSeriesIds, setSelectedSeriesIds] = useState<Map<string, boolean>>(new Map());
   const [currentHoveredSerieIndex, setCurrentHoveredSerieIndex] = useState(-1);
+
+  const { companyId, width, height, dataset, optionsInstruments, handleSelectSeries } = useAppChartContext();
 
   /**
    * initialize() trigged on mount and dataset change
@@ -69,7 +72,7 @@ function MainGraph(props: MainGraphProps) {
   };
 
   useEffect(() => {
-    initialize(props.dataset);
+    initialize(dataset);
   }, []);
 
   /**
@@ -115,8 +118,7 @@ function MainGraph(props: MainGraphProps) {
    *  2. If remove do remove from selection
    *
    */
-  const handleSelectSeries = (instrument: Instrument) => {
-    const { dataset } = props;
+  const onHandleSelectSeries = (instrument: Instrument) => {
     const { trancheId } = instrument;
     const newSelection = new Map(selectedSeriesIds);
 
@@ -129,9 +131,7 @@ function MainGraph(props: MainGraphProps) {
     setSelectedSeriesIds(newSelection);
     setAnimateTransition(true);
 
-    return selectedSeriesIds.has(trancheId)
-      ? update(filteredActiveSeries, dateRange)
-      : props.handleSelectSeries(instrument);
+    return selectedSeriesIds.has(trancheId) ? update(filteredActiveSeries, dateRange) : handleSelectSeries(instrument);
   };
 
   const handleBrushRange = (dateRange: DateRange) => {
@@ -160,16 +160,16 @@ function MainGraph(props: MainGraphProps) {
       {dataLoaded && (
         <>
           <GraphContainer
-            width={props.width}
-            height={props.height - 80}
-            companyId={props.companyId}
+            width={width}
+            height={height - 80}
+            companyId={companyId}
             selectedDates={selectedDates}
             seriesList={seriesList}
             animateTransition={animateTransition}
             currentHoveredSerieIndex={currentHoveredSerieIndex}
           />
           <Brush
-            width={props.width}
+            width={width}
             height={80}
             series={seriesListForBrush}
             dates={dates}
@@ -182,10 +182,10 @@ function MainGraph(props: MainGraphProps) {
             onBrushEnd={handleBrushEnd}
           />
           <Legend
-            width={props.width}
+            width={width}
             height={120} // see css to change height
-            optionsInstruments={Object.values(props.optionsInstruments)}
-            handleSelectSeries={handleSelectSeries}
+            optionsInstruments={Object.values(optionsInstruments)}
+            handleSelectSeries={onHandleSelectSeries}
             x={margin.yAxis}
             y={0}
             selectedSeriesIds={selectedSeriesIds}

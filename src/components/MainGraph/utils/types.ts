@@ -43,18 +43,18 @@ export interface Scales {
   yScale: ScaleLinear<number, number>;
 }
 
-interface Dataset {
+export interface Dataset {
   dates: number[];
   series: Series[];
 }
 
-type HandleSelectSeries = (instrument: Instrument) => void;
-type Dict = { [key: string]: Instrument };
+export type HandleSelectSeries = (instrument: Instrument) => void;
+export type OptionsInstrumentsDict = { [key: string]: Instrument };
 
 export interface MainGraphProps {
   companyId: string;
   dataset: Dataset;
-  optionsInstruments: Dict;
+  optionsInstruments: OptionsInstrumentsDict;
   width: number;
   height: number;
   handleSelectSeries: HandleSelectSeries;
