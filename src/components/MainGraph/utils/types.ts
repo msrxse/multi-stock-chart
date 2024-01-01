@@ -65,6 +65,7 @@ export interface AxisProps {
   x: number;
   y: number;
   tickNum?: number;
+  view?: 'graph' | 'chart';
 }
 
 export type DateRange = [number, number] | undefined;

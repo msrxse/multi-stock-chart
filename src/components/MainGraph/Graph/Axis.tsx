@@ -1,22 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { axisLeft, axisBottom, axisRight } from 'd3-axis';
-import { timeFormat } from 'd3-time-format';
 import { select } from 'd3-selection';
 import { AxisProps } from '../utils/types';
+import { transition } from 'd3-transition';
 
-const monthDateFormat = "%d-%b-'%y";
-
-function addCommas(x) {
-  const parts = x.toString().split('.');
-
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-  return parts.join('.');
-}
-
-function formatTitle(s) {
-  return s.replace('_', ' ');
-}
+select.prototype.transition = transition;
 
 /**
  *
@@ -24,7 +12,7 @@ function formatTitle(s) {
  * @returns
  */
 function Axis(props: AxisProps) {
-  const axisRef = useRef(null);
+  const axisRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     drawAxis();
@@ -35,42 +23,34 @@ function Axis(props: AxisProps) {
   }, [props]);
 
   let axis =
-    (props.orientation === 'left' && axisLeft()) || (props.orientation === 'right' && axisRight()) || axisBottom();
+    (props.orientation === 'left' && axisLeft(props.scale)) ||
+    (props.orientation === 'right' && axisRight(props.scale)) ||
+    axisBottom(props.scale);
 
   const drawAxis = () => {
     if (props.orientation === 'left') {
-      axis = axisLeft()
-        .scale(props.scale)
-        .ticks(props.tickNum ? props.tickNum : 10)
-        .tickFormat((d) => addCommas(d));
+      axis = axisLeft(props.scale).ticks(props.tickNum ? props.tickNum : 10);
 
       if (axisRef.current) {
         select(axisRef.current).call(axis);
       }
     } else if (props.orientation === 'right') {
-      axis = axisRight()
-        .scale(props.scale)
-        .tickFormat((d) => addCommas(d));
+      axis = axisRight(props.scale);
 
       if (axisRef.current) {
         select(axisRef.current).call(axis);
       }
     } else {
       if (props.view === 'graph') {
-        axis = axisBottom()
-          .scale(props.scale)
-          .tickFormat(timeFormat(monthDateFormat))
+        axis = axisBottom(props.scale)
           .ticks(props.width / 80)
           .tickSizeOuter(0);
       } else if (props.view === 'chart') {
-        axis = axisBottom()
-          .scale(props.scale)
-          .tickFormat((d) => formatTitle(d))
+        axis = axisBottom(props.scale)
           .ticks(props.width / 80)
           .tickSizeOuter(0);
       } else {
-        axis = axisBottom()
-          .scale(props.scale)
+        axis = axisBottom(props.scale)
           .ticks(props.width / 80)
           .tickSizeOuter(0);
       }

@@ -1,11 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
 import { useState, useRef, useEffect, MouseEvent } from 'react';
 import moment from 'moment';
 import { line } from 'd3-shape';
 import { bisectLeft, least, ascending } from 'd3-array';
 import { select } from 'd3-selection';
-import { easeCubicOut, easeCubicIn } from 'd3-ease';
 import { Popover } from 'antd';
 import Icon from '../../Icon/Icon';
 import generateRamdomId from '../utils/generateRamdomId';
@@ -18,7 +15,7 @@ import { GraphProps, Series } from '../utils/types';
 import styles from './Graph.module.css';
 
 function Graph(props: GraphProps) {
-  const [simPaths, setSimPaths] = useState<(string | undefined)[]>([]);
+  const [simPaths, setSimPaths] = useState<(string | null)[]>([]);
   const [hoveredSimPathId, setHoveredSimPathId] = useState<number | null>(null);
   const [tooltipXPos, setTooltipXPos] = useState(0);
   const [tooltipYPos, setTooltipYPos] = useState(0);
@@ -45,8 +42,8 @@ function Graph(props: GraphProps) {
   }, [props.selectedDates, props.series.length]);
 
   const drawSimPaths = () => {
-    lineGenerator.x((d, i) => props.xScale(props.selectedDates[i]));
-    lineGenerator.y((d) => props.yScale(d));
+    lineGenerator.x((_, i) => props.xScale(props.selectedDates[i]));
+    lineGenerator.y((d) => props.yScale(d || 0));
 
     // generate simPaths from lineGenerator
     const simPaths = props.series.map((d) => {
@@ -64,8 +61,8 @@ function Graph(props: GraphProps) {
 
     if (simPathsRef.current) {
       // update lineGenerator from new scale and data
-      lineGenerator.x((d, i) => props.xScale(props.selectedDates[i]));
-      lineGenerator.y((d) => props.yScale(d));
+      lineGenerator.x((_, i) => props.xScale(props.selectedDates[i]));
+      lineGenerator.y((d) => props.yScale(d!));
 
       // generate simPaths from lineGenerator
       const newSimPaths = props.series.map((d) => {
@@ -83,25 +80,24 @@ function Graph(props: GraphProps) {
         const simPathsNode = select(simPathsRef.current);
 
         if (!props.animateTransition) {
-          const paths = simPathsNode
-            .selectAll('.simPath')
-            .data(props.series)
-
-            // paths.exit().remove()
-            // paths.enter().append('path')
-            .attr('d', (d) => lineGenerator(d.values))
-            // .attr('stroke', () => colors.green)
-            .on('end', () => {
-              // set new values to state
-              setLineGenerator(() => lineGenerator);
-              setSimPaths(simPaths);
-            });
-          const hoverPaths = simPathsNode
-            .selectAll('.simPath-hover')
-            .data(props.series)
-            // hoverPaths.exit().remove()
-            // hoverPaths.enter().append('path')
-            .attr('d', (d) => lineGenerator(d.values));
+          // const paths = simPathsNode
+          //   .selectAll('.simPath')
+          //   .data(props.series)
+          //   // paths.exit().remove()
+          //   // paths.enter().append('path')
+          //   .attr('d', (d) => lineGenerator(d.values))
+          //   // .attr('stroke', () => colors.green)
+          //   .on('end', () => {
+          //     // set new values to state
+          //     setLineGenerator(() => lineGenerator);
+          //     setSimPaths(simPaths);
+          //   });
+          // const hoverPaths = simPathsNode
+          //   .selectAll('.simPath-hover')
+          //   .data(props.series)
+          //   // hoverPaths.exit().remove()
+          //   // hoverPaths.enter().append('path')
+          //   .attr('d', (d) => lineGenerator(d.values));
         } else {
           // const paths = simPathsNode
           //   .selectAll('.simPath')
@@ -160,13 +156,13 @@ function Graph(props: GraphProps) {
     const i1 = bisectLeft(props.selectedDates, xm, 1);
     const i0 = i1 - 1;
     const i = xm - props.selectedDates[i0] > props.selectedDates[i1] - xm ? i1 : i0;
-    const s = least(props.series, (d) => Math.abs(d.values[i] - ym));
+    const s = least(props.series, (d) => Math.abs((d.values[i] || 0) - ym));
     // list of props.series in the path of yPos
     const currentSeriesSelected: Series[] = props.series.reduce<Series[]>((acc, serie) => {
       if (serie.values[i]) {
         acc.push({
           ...serie,
-          tooltipYPos: props.yScale(serie.values[i]),
+          tooltipYPos: props.yScale(serie.values[i] || 0),
         });
       }
 
@@ -246,6 +242,9 @@ function Graph(props: GraphProps) {
         {
           // visible simPaths
           simPaths.map((simPath, i) => {
+            if (!simPath) {
+              return null;
+            }
             return (
               <path
                 d={simPath}
@@ -265,6 +264,9 @@ function Graph(props: GraphProps) {
           // highlight simPaths
           simPaths.map((simPath, i) => {
             const simIsHovered = i === hoveredSimPathId;
+            if (!simPath) {
+              return null;
+            }
 
             return (
               <path

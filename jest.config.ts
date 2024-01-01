@@ -8,6 +8,7 @@ export default {
   rootDir: 'src',
   moduleNameMapper: {
     '\\.(gif|ttf|eot|svg|png)$': '<rootDir>/test/__ mocks __/fileMock.js',
+    '\\.(css|less)$': '<rootDir>/test/__mocks__/styleMock.js',
     '^d3-(.*)$': `<rootDir>../node_modules/d3-$1/dist/d3-$1`,
   },
 };
