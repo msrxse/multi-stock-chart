@@ -22,12 +22,20 @@ function Axis(props: AxisProps) {
     updateAxis();
   }, [props]);
 
+  if (!props.scale) {
+    return null;
+  }
+
   let axis =
     (props.orientation === 'left' && axisLeft(props.scale)) ||
     (props.orientation === 'right' && axisRight(props.scale)) ||
     axisBottom(props.scale);
 
   const drawAxis = () => {
+    if (!props.scale) {
+      return null;
+    }
+
     if (props.orientation === 'left') {
       axis = axisLeft(props.scale).ticks(props.tickNum ? props.tickNum : 10);
 
@@ -73,6 +81,10 @@ function Axis(props: AxisProps) {
   const updateAxis = () => {
     if (axisRef.current) {
       const axisNode = select(axisRef.current);
+
+      if (!props.scale) {
+        return null;
+      }
 
       axis.scale(props.scale);
       if (props.orientation === 'left') {

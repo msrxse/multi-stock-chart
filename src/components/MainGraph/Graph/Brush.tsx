@@ -2,14 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { axisBottom } from 'd3-axis';
 import { scaleLinear, scaleUtc } from 'd3-scale';
 import { select } from 'd3-selection';
-import { line } from 'd3-shape';
+import { curveLinear, line } from 'd3-shape';
 import { timeFormat } from 'd3-time-format';
 import { brushX, brushSelection } from 'd3-brush';
-import { max, extent } from 'd3-array';
+import { extent } from 'd3-array';
 import { easeCubicOut } from 'd3-ease';
 import { margin } from '../utils/margin';
 import generateRamdomId from '../utils/generateRamdomId';
-import { BrushProps } from '../utils/types';
+import { DateRange, Scales, BrushProps } from '../utils/types';
+
+import type { D3BrushEvent } from 'd3-brush';
+import type { BaseType } from 'd3-selection';
 
 import styles from '../allCss.module.css';
 
@@ -19,13 +22,24 @@ function Brush(props: BrushProps) {
   const { x, y, series, dates, dateRange, width, height, animateTransition, onBrushChange, onBrushStart, onBrushEnd } =
     props;
 
-  const getScales = (series, dates, width, height) => {
+  const getScales = () => {
     // calculate scale domains
     const timeDomain = extent(dates);
+
+    if (!timeDomain[0] || !timeDomain[1]) {
+      return {};
+    }
+
     // const maxVal = max(series, sims => max(sims.values));
-    const allLinesData = series.flatMap((s) => s.values);
-    const valueDomain = extent(allLinesData);
+    const allLinesData = series.flatMap((s) => s.values).filter((x) => x);
+
+    const valueDomain = extent(allLinesData as number[]);
     // set scale ranges to width and height of container
+
+    if (!valueDomain[0] || !valueDomain[1]) {
+      return {};
+    }
+
     const xScale = scaleUtc()
       .range([margin.left, width - margin.right])
       .domain(timeDomain);
@@ -37,32 +51,42 @@ function Brush(props: BrushProps) {
     return { xScale, yScale };
   };
 
-  const [scales, setScales] = useState(() => getScales(series, dates, width, height));
-  // const [lineGenerator, setLineGenerator] = useState(line().defined(d => !isNaN(d)));
-  const [lineGenerator, setLineGenerator] = useState(() => line().defined((d) => d !== null));
-  const [simPaths, setSimPaths] = useState([]);
+  const [scales, setScales] = useState<Scales>(getScales);
+  const [lineGenerator, setLineGenerator] = useState(() =>
+    line()
+      .defined((d) => d !== null)
+      .curve(curveLinear),
+  );
+  const [simPaths, setSimPaths] = useState<string[]>([]);
 
-  const xAxisRef = useRef(null);
-  const simPathsRef = useRef(null);
-  const brushRef = useRef(null);
+  const xAxisRef = useRef<SVGSVGElement>(null);
+  const simPathsRef = useRef<SVGSVGElement>(null);
+  const brushRef = useRef<SVGGElement>(null);
 
-  const brushed = (event) => {
+  const brushed = (event: D3BrushEvent<BaseType>) => {
     const { selection } = event;
     // on first load onBrushChange cant be call with range = undefined (scales needs to exists)
     if (Object.keys(scales).length === 0 || selection === null) {
       return;
     }
-    if (event.selection && event.sourceEvent !== null) {
-      const [x1, x2] = event.selection;
-      const range = [scales.xScale && scales.xScale.invert(x1), scales.xScale && scales.xScale.invert(x2)];
+    if (event.selection && event.sourceEvent !== null && scales.xScale) {
+      const [x1, x2] = event.selection as number[];
+
+      if (!x1 || !x2) {
+        return;
+      }
+
+      const range: DateRange = [scales.xScale.invert(x1), scales.xScale.invert(x2)];
+
       onBrushChange(range);
     }
   };
 
-  const brushEnded = (event) => {
-    if (!event.selection && brushRef.current) {
+  const brushEnded = (event: D3BrushEvent<BaseType>) => {
+    if (!event.selection && brushRef.current && scales.xScale) {
       const selection = brushSelection(brushRef.current) ? null : scales.xScale.range();
 
+      // @ts-expect-error Argument of type 'number[] | null' is not assignable to parameter of type 'BrushSelection'
       select(brushRef.current).call(brush.move, selection);
     }
 
@@ -77,10 +101,10 @@ function Brush(props: BrushProps) {
     .on('start', onBrushStart())
     .on('end', brushEnded)
     .on('brush', brushed);
-  let xAxis = axisBottom();
+  let xAxis = axisBottom(scales.xScale!);
 
   useEffect(() => {
-    setupBrush(series, dates, width, height);
+    setupBrush();
   }, []);
 
   useEffect(() => {
@@ -92,21 +116,24 @@ function Brush(props: BrushProps) {
   }, [series.length]);
 
   const updateSimPaths = (animateTransition: boolean) => {
-    const updatedScales = getScales(series, dates, width, height);
+    const updatedScales = getScales();
+
+    if (!updatedScales.xScale || !updatedScales.xScale) {
+      return;
+    }
 
     if (simPathsRef.current) {
       // update scale and data
 
-      lineGenerator.x((d, i) => updatedScales.xScale(dates[i]));
-      lineGenerator.y((d) => updatedScales.yScale(d));
+      lineGenerator.x((_, i) => updatedScales.xScale(dates[i]));
+      lineGenerator.y((d) => updatedScales.yScale(d as unknown as number));
 
       // generate simPaths from lineGenerator
-      const simPaths = series.map((d) => {
-        return lineGenerator(d.values);
-      });
+      // @ts-expect-error Argument of type '(number | null)[]' is not assignable to parameter of type '[number, number][]'
+      const updatedSimPaths = series.map((d) => lineGenerator(d.values));
 
       setLineGenerator(() => lineGenerator);
-      setSimPaths(simPaths);
+      setSimPaths(updatedSimPaths);
 
       // get svg node
       const simPathsNode = select(simPathsRef.current);
@@ -123,6 +150,7 @@ function Brush(props: BrushProps) {
           .transition()
           .duration(700)
           .ease(easeCubicOut)
+          // @ts-expect-error Argument of type '(number | null)[]' is not assignable to parameter of type '[number, number][]'
           .attr('d', (d) => lineGenerator(d.values))
           // .attr('stroke', () => colors.green)
           .attr('stroke-opacity', 0.6)
@@ -134,6 +162,7 @@ function Brush(props: BrushProps) {
         simPathsNode
           .selectAll('.simPath')
           .data(series)
+          // @ts-expect-error Argument of type '(number | null)[]' is not assignable to parameter of type '[number, number][]'
           .attr('d', (d) => lineGenerator(d.values));
         // .attr('stroke', () => colors.green);
       }
@@ -145,7 +174,7 @@ function Brush(props: BrushProps) {
 
       xAxisNode.call(xAxis);
     }
-    if (brushRef.current) {
+    if (brushRef.current && dateRange) {
       brush.extent([
         [margin.left, margin.top],
         [width - margin.right, height - margin.bottom],
@@ -161,22 +190,24 @@ function Brush(props: BrushProps) {
     setScales(updatedScales);
   };
 
-  const setupBrush = (series, dates, width, height) => {
-    const updatedScales = getScales(series, dates, width, height);
+  const setupBrush = () => {
+    const updatedScales = getScales();
 
-    lineGenerator.x((d, i) => updatedScales.xScale(dates[i]));
-    lineGenerator.y((d) => {
-      return updatedScales.yScale(d);
-    });
+    if (!updatedScales.xScale || !updatedScales.yScale) {
+      return;
+    }
+
+    lineGenerator.x((_, i) => updatedScales.xScale(dates[i]));
+    lineGenerator.y((d) => updatedScales.yScale(d as unknown as number));
     // generate simPaths from lineGenerator
-    const simPaths = series.map((d) => {
-      return lineGenerator(d.values);
-    });
+    // @ts-expect-error Argument of type '(number | null)[]' is not assignable to parameter of type '[number, number][]'
+    const newSimPaths = series.map((d) => lineGenerator(d.values));
 
-    xAxis = axisBottom()
+    xAxis = xAxis
       .scale(updatedScales.xScale)
       .tickFormat((date) => {
         // if (timeYear(date) < timeDay.offset(date, -1)) {
+        // @ts-expect-error Argument of type 'Date | NumberValue' is not assignable to parameter of type 'Date'.
         return timeFormat(yearDateFormat)(date);
         // } else {
         //   return timeFormat('%Y')(date);
@@ -188,7 +219,7 @@ function Brush(props: BrushProps) {
       select(xAxisRef.current).call(xAxis);
     }
 
-    if (brushRef.current) {
+    if (brushRef.current && dateRange) {
       const brushRefNode = select(brushRef.current);
 
       brushRefNode
@@ -198,7 +229,7 @@ function Brush(props: BrushProps) {
     // set new values to state
     setScales(updatedScales);
     setLineGenerator(() => lineGenerator);
-    setSimPaths(simPaths);
+    setSimPaths(newSimPaths);
   };
 
   return (

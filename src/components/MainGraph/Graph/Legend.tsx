@@ -33,7 +33,7 @@ function Legend(props: LegendProps) {
   return (
     <div className={styles.legendContainer}>
       <ul style={{ marginLeft: props.x, width: props.width }}>
-        {Object.values(props.optionsInstruments).map((instrument, i) => (
+        {Object.values(props.optionsInstruments).map((instrument) => (
           <li
             key={instrument.trancheId}
             className={cn(styles.listItem, {

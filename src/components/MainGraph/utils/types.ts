@@ -24,8 +24,8 @@ export interface GraphProps {
   height: number;
   x: number;
   y: number;
-  xScale: ScaleTime<number, number>;
-  yScale: ScaleLinear<number, number>;
+  xScale: Scales['xScale'];
+  yScale: Scales['yScale'];
   currentHoveredSerieIndex: number;
 }
 
@@ -40,8 +40,8 @@ export interface GraphContainerProps {
 }
 
 export interface Scales {
-  xScale: ScaleTime<number, number>;
-  yScale: ScaleLinear<number, number>;
+  xScale?: ScaleTime<number, number>;
+  yScale?: ScaleLinear<number, number>;
 }
 
 export interface Dataset {
@@ -60,7 +60,7 @@ export interface MainGraphInitializeProps {
 export interface AxisProps {
   height: number;
   orientation: 'left' | 'right' | 'bottom';
-  scale: ScaleTime<number, number> | ScaleLinear<number, number>;
+  scale: ScaleTime<number, number> | ScaleLinear<number, number> | undefined;
   width: number;
   x: number;
   y: number;
@@ -68,7 +68,7 @@ export interface AxisProps {
   view?: 'graph' | 'chart';
 }
 
-export type DateRange = [number, number] | undefined;
+export type DateRange = [Date, Date] | [number, number] | undefined;
 
 export interface BrushProps {
   width: number;
@@ -80,8 +80,8 @@ export interface BrushProps {
   animateTransition: boolean;
   dateRange: DateRange;
   onBrushChange: (dateRange: DateRange) => void;
-  onBrushStart: () => void;
-  onBrushEnd: () => void;
+  onBrushStart: () => null;
+  onBrushEnd: () => null;
 }
 
 export type Id = string;

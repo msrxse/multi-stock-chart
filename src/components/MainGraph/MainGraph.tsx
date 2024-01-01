@@ -148,10 +148,12 @@ function MainGraph() {
   };
 
   const handleBrushStart = () => {
+    return null;
     // setAnimateTransition(false);
   };
 
   const handleBrushEnd = () => {
+    return null;
     // setAnimateTransition(false);
   };
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, MouseEvent } from 'react';
 import moment from 'moment';
-import { line } from 'd3-shape';
+import { curveLinear, line } from 'd3-shape';
 import { bisectLeft, least, ascending } from 'd3-array';
 import { select } from 'd3-selection';
 import { Popover } from 'antd';
@@ -23,7 +23,11 @@ function Graph(props: GraphProps) {
   const [hoveredSimPathDate, setHoveredSimPathDate] = useState<string | null>(null);
   const [tooltipText, setTooltipText] = useState('');
 
-  const [lineGenerator, setLineGenerator] = useState(() => line<number | null>().defined((d) => d !== null));
+  const [lineGenerator, setLineGenerator] = useState(() =>
+    line<number | null>()
+      .defined((d) => d !== null)
+      .curve(curveLinear),
+  );
   const simPathsRef = useRef<SVGSVGElement>(null);
 
   /**
@@ -42,8 +46,8 @@ function Graph(props: GraphProps) {
   }, [props.selectedDates, props.series.length]);
 
   const drawSimPaths = () => {
-    lineGenerator.x((_, i) => props.xScale(props.selectedDates[i]));
-    lineGenerator.y((d) => props.yScale(d || 0));
+    lineGenerator.x((_, i) => props.xScale!(props.selectedDates[i]));
+    lineGenerator.y((d) => props.yScale!(d || 0));
 
     // generate simPaths from lineGenerator
     const simPaths = props.series.map((d) => {
@@ -61,8 +65,8 @@ function Graph(props: GraphProps) {
 
     if (simPathsRef.current) {
       // update lineGenerator from new scale and data
-      lineGenerator.x((_, i) => props.xScale(props.selectedDates[i]));
-      lineGenerator.y((d) => props.yScale(d!));
+      lineGenerator.x((_, i) => props.xScale!(props.selectedDates[i]));
+      lineGenerator.y((d) => props.yScale!(d!));
 
       // generate simPaths from lineGenerator
       const newSimPaths = props.series.map((d) => {
@@ -141,7 +145,7 @@ function Graph(props: GraphProps) {
     const selector = `.graphSVG_${props.keyVal}`;
     const node: SVGSVGElement | null = document.querySelector(selector);
 
-    if (!node) {
+    if (!node || !props.xScale || !props.yScale) {
       return undefined;
     }
 
@@ -159,7 +163,7 @@ function Graph(props: GraphProps) {
     const s = least(props.series, (d) => Math.abs((d.values[i] || 0) - ym));
     // list of props.series in the path of yPos
     const currentSeriesSelected: Series[] = props.series.reduce<Series[]>((acc, serie) => {
-      if (serie.values[i]) {
+      if (serie.values[i] && props.yScale) {
         acc.push({
           ...serie,
           tooltipYPos: props.yScale(serie.values[i] || 0),
