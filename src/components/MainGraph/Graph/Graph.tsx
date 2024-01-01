@@ -10,7 +10,7 @@ import Axis from './Axis';
 import { colors } from '../utils/colors';
 import { margin } from '../utils/margin';
 import DateFilterLegend from './DateFilterLegend';
-import { GraphProps, Series } from '../utils/types';
+import { XScale, YScale, GraphProps, Series } from '../utils/types';
 
 import styles from './Graph.module.css';
 
@@ -46,27 +46,31 @@ function Graph(props: GraphProps) {
   }, [props.selectedDates, props.series.length]);
 
   const drawSimPaths = () => {
-    lineGenerator.x((_, i) => props.xScale!(props.selectedDates[i]));
-    lineGenerator.y((d) => props.yScale!(d || 0));
+    if (simPathsRef.current && props.xScale && props.yScale) {
+      // https://stackoverflow.com/questions/68371833/cannot-invoke-an-object-which-is-possibly-undefined-even-after-ensuring-it
+      lineGenerator.x((_, i) => (props.xScale as XScale)(props.selectedDates[i]));
+      lineGenerator.y((d) => (props.yScale as YScale)(d || 0));
 
-    // generate simPaths from lineGenerator
-    const simPaths = props.series.map((d) => {
-      return lineGenerator(d.values);
-    });
+      // generate simPaths from lineGenerator
+      const simPaths = props.series.map((d) => {
+        return lineGenerator(d.values);
+      });
 
-    setLineGenerator(() => lineGenerator);
+      setLineGenerator(() => lineGenerator);
 
-    // set new values to state
-    setSimPaths(simPaths);
+      // set new values to state
+      setSimPaths(simPaths);
+    }
   };
 
   const updateSimPaths = () => {
     // Animate simPath color but don't change data
 
-    if (simPathsRef.current) {
+    if (simPathsRef.current && props.xScale && props.yScale) {
       // update lineGenerator from new scale and data
-      lineGenerator.x((_, i) => props.xScale!(props.selectedDates[i]));
-      lineGenerator.y((d) => props.yScale!(d!));
+      // https://stackoverflow.com/questions/68371833/cannot-invoke-an-object-which-is-possibly-undefined-even-after-ensuring-it
+      lineGenerator.x((_, i) => (props.xScale as XScale)(props.selectedDates[i]));
+      lineGenerator.y((d) => (props.yScale as YScale)(d || 0));
 
       // generate simPaths from lineGenerator
       const newSimPaths = props.series.map((d) => {

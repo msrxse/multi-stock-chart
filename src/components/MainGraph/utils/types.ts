@@ -44,6 +44,9 @@ export interface Scales {
   yScale?: ScaleLinear<number, number>;
 }
 
+export type XScale = ScaleTime<number, number>;
+export type YScale = ScaleLinear<number, number>;
+
 export interface Dataset {
   dates: number[];
   series: Series[];
