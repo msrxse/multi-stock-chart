@@ -6,7 +6,7 @@ import Brush from './Graph/Brush';
 import Legend from './Graph/Legend';
 import { margin } from './utils/margin';
 import { getActiveSeriesIds, getFilteredActiveSeries, closestDateFound, filterByDate } from './utils/utils';
-import { DateRange, Series, Instrument, MainGraphInitializeProps } from './utils/types';
+import { DateRange, Series, Instrument, MainGraphInitializeProps, SelectedSeriesIds } from './utils/types';
 import { useAppChartContext } from './hooks/useAppContext';
 
 import styles from './MainGraph.module.css';
@@ -19,7 +19,7 @@ function MainGraph() {
   const [dates, setDates] = useState<number[]>([]);
   const [seriesListForBrush, setSeriesListForBrush] = useState<Series[]>([]);
   const [animateTransition, setAnimateTransition] = useState(true);
-  const [selectedSeriesIds, setSelectedSeriesIds] = useState<Map<string, boolean>>(new Map());
+  const [selectedSeriesIds, setSelectedSeriesIds] = useState<SelectedSeriesIds>(new Map());
   const [currentHoveredSerieIndex, setCurrentHoveredSerieIndex] = useState(-1);
 
   const { companyId, width, height, dataset, optionsInstruments, handleSelectSeries } = useAppChartContext();
@@ -47,9 +47,9 @@ function MainGraph() {
     //   1. initial series always active
     //   2. any new one always active
     //   3. Any that the user hide leave it hidden
-    const newSelectedSeriesIds = series.map((serie) => {
+    const newSelectedSeriesIds: [string, boolean][] = series.map((serie) => {
       if (selectedSeriesIds.has(serie.key)) {
-        return [serie.key, selectedSeriesIds.get(serie.key)];
+        return [serie.key, !!selectedSeriesIds.get(serie.key)];
       }
 
       return [serie.key, true];

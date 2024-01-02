@@ -40,8 +40,8 @@ export interface GraphContainerProps {
 }
 
 export interface Scales {
-  xScale?: ScaleTime<number, number>;
-  yScale?: ScaleLinear<number, number>;
+  xScale?: XScale;
+  yScale?: YScale;
 }
 
 export type XScale = ScaleTime<number, number>;
@@ -99,10 +99,12 @@ export interface Instrument {
   maturity: string;
 }
 
+export type SelectedSeriesIds = Map<string, boolean>;
+
 export interface LegendProps {
   handleSelectSeries: HandleSelectSeries;
   optionsInstruments: Instrument[];
-  selectedSeriesIds: Map<string, boolean>;
+  selectedSeriesIds: SelectedSeriesIds;
   series: Series[];
   setCurrentHoveredSerieIndex: (trancheId: string | -1) => void;
   height: number;
