@@ -41,6 +41,7 @@ function Legend(props: LegendProps) {
             })}
           >
             <button
+              data-testid={`legendItem_${instrument.trancheId}`}
               type="button"
               className={styles.listButton}
               onClick={() => props.handleSelectSeries(instrument)}
