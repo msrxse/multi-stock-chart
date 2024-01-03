@@ -229,129 +229,134 @@ function Graph(props: GraphProps) {
   };
 
   return (
-    <g
-      width={props.width}
-      height={props.height}
-      transform={`translate(${props.x}, ${props.y})`}
-      ref={simPathsRef}
-      onMouseLeave={handleMouseLeave}
-    >
-      <g>
-        <rect
-          x={margin.left}
-          y={margin.top}
-          className="graphArea"
-          id={`graphArea_${props.keyVal}`}
-          width={props.width - margin.left - margin.right}
-          height={props.height - margin.bottom - margin.top}
-          fill={colors.graphBkgd}
-          onMouseMove={handleBetterSimMouseHover}
-        />
-        {
-          // visible simPaths
-          simPaths.map((simPath, i) => {
-            if (!simPath) {
-              return null;
-            }
-            return (
-              <path
-                d={simPath}
-                key={`simPath-${generateRamdomId()}`}
-                id={`simPath-${i}`}
-                className="simPath"
-                fill="none"
-                // stroke={props.series[i].over ? colors.red : colors.green}
-                stroke={props.series[i]?.color || colors.black}
-                strokeWidth="2"
-                strokeOpacity={props.currentHoveredSerieIndex === -1 || props.currentHoveredSerieIndex === i ? 1 : 0.3}
-              />
-            );
-          })
-        }
-        {
-          // highlight simPaths
-          simPaths.map((simPath, i) => {
-            const simIsHovered = i === hoveredSimPathId;
-            if (!simPath) {
-              return null;
-            }
+    <svg>
+      <g
+        width={props.width}
+        height={props.height}
+        transform={`translate(${props.x}, ${props.y})`}
+        ref={simPathsRef}
+        onMouseLeave={handleMouseLeave}
+      >
+        <g>
+          <rect
+            x={margin.left}
+            y={margin.top}
+            className="graphArea"
+            id={`graphArea_${props.keyVal}`}
+            width={props.width - margin.left - margin.right}
+            height={props.height - margin.bottom - margin.top}
+            fill={colors.graphBkgd}
+            onMouseMove={handleBetterSimMouseHover}
+          />
+          {
+            // visible simPaths
+            simPaths.map((simPath, i) => {
+              if (!simPath) {
+                return null;
+              }
+              return (
+                <path
+                  role="img"
+                  d={simPath}
+                  key={`simPath-${generateRamdomId()}`}
+                  id={`simPath-${i}`}
+                  className="simPath"
+                  fill="none"
+                  // stroke={props.series[i].over ? colors.red : colors.green}
+                  stroke={props.series[i]?.color || colors.black}
+                  strokeWidth="2"
+                  strokeOpacity={
+                    props.currentHoveredSerieIndex === -1 || props.currentHoveredSerieIndex === i ? 1 : 0.3
+                  }
+                />
+              );
+            })
+          }
+          {
+            // highlight simPaths
+            simPaths.map((simPath, i) => {
+              const simIsHovered = i === hoveredSimPathId;
+              if (!simPath) {
+                return null;
+              }
 
-            return (
-              <path
-                d={simPath}
-                key={`simPath-${generateRamdomId()}-hover`}
-                id={`simPath-${i}-hover`}
-                className="simPath-hover"
-                fill="none"
-                stroke={simIsHovered ? getColorOfSelectedSeries() : colors.lightGray}
-                strokeWidth="2"
-                strokeOpacity={typeof hoveredSimPathId === 'number' ? 1 : 0}
-              />
-            );
-          })
-        }
+              return (
+                <path
+                  d={simPath}
+                  key={`simPath-${generateRamdomId()}-hover`}
+                  id={`simPath-${i}-hover`}
+                  className="simPath-hover"
+                  fill="none"
+                  stroke={simIsHovered ? getColorOfSelectedSeries() : colors.lightGray}
+                  strokeWidth="2"
+                  strokeOpacity={typeof hoveredSimPathId === 'number' ? 1 : 0}
+                />
+              );
+            })
+          }
 
-        <Popover
-          key="sim-tooltip"
-          title={hoveredSimPathDate}
-          content={getPopoverContent()}
-          placement="right"
-          trigger="hover"
-          open={!!hoveredSimPathDate}
-        >
-          <>
-            <circle
-              cx={tooltipXPos}
-              cy={tooltipYPos}
-              r={10}
-              fill={colors.gray}
-              fillOpacity={0}
-              className="tooltipCircle"
-            />
-            {currentSeriesSelected.map((serie) => (
+          <Popover
+            key="sim-tooltip"
+            title={hoveredSimPathDate}
+            content={getPopoverContent()}
+            placement="right"
+            trigger="hover"
+            open={!!hoveredSimPathDate}
+          >
+            <>
               <circle
-                key={`serie-${generateRamdomId()}`}
                 cx={tooltipXPos}
-                cy={serie.tooltipYPos}
-                r={4}
-                strokeWidth={2}
-                stroke={colors.black}
-                strokeOpacity={hoveredSimPathDate ? 1 : 0}
-                fill={serie.color}
-                fillOpacity={hoveredSimPathDate ? 1 : 0}
+                cy={tooltipYPos}
+                r={10}
+                fill={colors.gray}
+                fillOpacity={0}
                 className="tooltipCircle"
               />
-            ))}
-          </>
-        </Popover>
+              {currentSeriesSelected.map((serie) => (
+                <circle
+                  key={`serie-${generateRamdomId()}`}
+                  cx={tooltipXPos}
+                  cy={serie.tooltipYPos}
+                  r={4}
+                  strokeWidth={2}
+                  stroke={colors.black}
+                  strokeOpacity={hoveredSimPathDate ? 1 : 0}
+                  fill={serie.color}
+                  fillOpacity={hoveredSimPathDate ? 1 : 0}
+                  className="tooltipCircle"
+                />
+              ))}
+            </>
+          </Popover>
 
-        <line
-          key="mouse-vertical-line"
-          className="mouse-vertical-line"
-          x1={tooltipXPos}
-          y1={props.height - margin.bottom}
-          x2={tooltipXPos}
-          y2={0 - margin.top}
-          stroke={colors.gray}
-          strokeWidth={1}
-          strokeOpacity={hoveredSimPathDate ? 1 : 0}
-          style={{ pointerEvents: 'none' }}
-        />
+          <line
+            key="mouse-vertical-line"
+            className="mouse-vertical-line"
+            x1={tooltipXPos}
+            y1={props.height - margin.bottom}
+            x2={tooltipXPos}
+            y2={0 - margin.top}
+            stroke={colors.gray}
+            strokeWidth={1}
+            strokeOpacity={hoveredSimPathDate ? 1 : 0}
+            style={{ pointerEvents: 'none' }}
+          />
+        </g>
+
+        <DateFilterLegend x={margin.left} y={margin.top} />
+
+        <g>
+          <Axis
+            width={props.width - margin.left}
+            height={props.height}
+            orientation="bottom"
+            scale={props.xScale}
+            x={0}
+            y={props.height - margin.bottom}
+          />
+        </g>
       </g>
-
-      <DateFilterLegend x={margin.left} y={margin.top} />
-
-      <g>
-        <Axis
-          width={props.width - margin.left}
-          height={props.height}
-          orientation="bottom"
-          scale={props.xScale}
-          x={0}
-          y={props.height - margin.bottom}
-        />
-      </g>
-    </g>
+    </svg>
   );
 }
 

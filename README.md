@@ -43,3 +43,19 @@ export default {
 - Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
 - Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
 - Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+
+# Tests
+
+- So error logs full components use:
+
+```
+DEBUG_PRINT_LIMIT=100000 yarn test {--file} --watch
+
+```
+
+- To log full components ad hoc use:
+
+```
+screen.debug(undefined, Infinity);
+
+```

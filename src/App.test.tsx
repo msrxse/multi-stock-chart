@@ -1,8 +1,9 @@
 import '@testing-library/jest-dom';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders App correctly', () => {
+test('renders 4 lines correctly', () => {
   render(<App />);
-  expect(true).toBeTruthy();
+
+  expect(screen.getAllByRole('img')).toHaveLength(4);
 });
